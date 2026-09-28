@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#120c1f"/>
+  <title>RPS Pay-to-Win — Kais Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0c0817;
+      --card-bg: rgba(22, 14, 38, 0.75);
+      --border: rgba(179, 138, 255, 0.2);
+      --gold: #ffcf66;
+      --gold-glow: rgba(255, 207, 102, 0.25);
+      --purple: #b38aff;
+      --purple-dark: #6432b8;
+      --accent: #2dd4bf;
+      --cream: #f5f2fc;
+      --muted: #9c91b5;
+      --red: #f43f5e;
+      --green: #10b981;
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--cream); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; }
+    body {
+      background: radial-gradient(circle at 50% -10%, rgba(179, 138, 255, 0.18), transparent 50%),
+                  radial-gradient(circle at 80% 90%, rgba(255, 207, 102, 0.08), transparent 40%),
+                  linear-gradient(180deg, #100b20, #07040d);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 24px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(16, 11, 32, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--purple);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(22, 14, 38, 0.6);
+      transition: .15s ease;
+    }
+    .back-btn:hover { background: rgba(179, 138, 255, 0.15); border-color: var(--purple); }
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(15px, 3vw, 20px);
+      letter-spacing: .08em;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(22, 14, 38, 0.6);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(22, 14, 38, 0.6);
+      color: var(--purple);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      transition: .15s ease;
+    }
+
+    /* Main Container */
+    .app {
+      width: min(100%, 860px);
+      margin: 0 auto;
+      padding: 16px clamp(12px, 3vw, 24px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* P2W Store Banner */
+    .p2w-ribbon {
+      border: 1px solid rgba(255, 207, 102, 0.35);
+      background: linear-gradient(135deg, rgba(255, 207, 102, 0.12), rgba(179, 138, 255, 0.08));
+      border-radius: 18px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .p2w-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .p2w-badge {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      background: var(--gold);
+      color: #1a1205;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .p2w-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--cream);
+    }
+    .p2w-spent {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    /* Arena Stage */
+    .stage {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: clamp(20px, 4vw, 36px);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background: radial-gradient(circle at 50% 50%, rgba(179, 138, 255, 0.06), transparent 50%);
+      pointer-events: none;
+    }
+
+    .versus-banner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .fighter-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+    .fighter-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      position: relative;
+    }
+    .fighter-name {
+      font-weight: 900;
+      font-size: 15px;
+      color: var(--cream);
+    }
+    .fighter-stat {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .vs-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(255, 207, 102, 0.4);
+    }
+
+    /* Hand Clash Zone */
+    .clash-zone {
+      width: 100%;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 16px;
+      padding: 20px 0;
+      position: relative;
+    }
+    .clash-hand {
+      font-size: clamp(60px, 14vw, 96px);
+      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.5));
+      transition: transform .3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .hand-player {
+      transform: scaleX(1);
+    }
+    .hand-cpu {
+      transform: scaleX(-1);
+    }
+    .clash-hand.slam {
+      animation: handSlam .4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+    @keyframes handSlam {
+      0% { transform: scale(0.6) translateY(-40px); opacity: 0; }
+      70% { transform: scale(1.15) translateY(5px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .hand-cpu.slam {
+      animation: cpuSlam .4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+    @keyframes cpuSlam {
+      0% { transform: scaleX(-1) scale(0.6) translateY(-40px); opacity: 0; }
+      70% { transform: scaleX(-1) scale(1.15) translateY(5px); opacity: 1; }
+      100% { transform: scaleX(-1) scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* Result Banner */
+    .result-announcement {
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0 20px;
+      text-align: center;
+    }
+    .result-main {
+      font-size: clamp(20px, 5vw, 32px);
+      font-weight: 1000;
+      letter-spacing: -.03em;
+    }
+    .result-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Move Selection Buttons */
+    .moves-tray {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 540px;
+    }
+    .btn-move {
+      min-height: 90px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all .16s ease;
+      color: var(--cream);
+    }
+    .btn-move:hover:not(:disabled) {
+      transform: translateY(-3px);
+      border-color: var(--purple);
+      background: rgba(179, 138, 255, 0.1);
+      box-shadow: 0 8px 25px rgba(179, 138, 255, 0.25);
+    }
+    .btn-move:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+    .btn-move:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .move-emoji {
+      font-size: 36px;
+    }
+    .move-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .move-key {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: .1em;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    /* Pay-to-Win Emergency Upsell Modal */
+    .overturn-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 3, 15, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .overturn-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overturn-card {
+      width: min(100%, 520px);
+      border-radius: 28px;
+      border: 2px solid var(--gold);
+      background: linear-gradient(160deg, #201338, #110920);
+      padding: clamp(20px, 4vw, 32px);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 207, 102, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transform: scale(0.92);
+      transition: transform .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .overturn-modal.open .overturn-card {
+      transform: scale(1);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-head h3 {
+      font-size: 24px;
+      font-weight: 1000;
+      letter-spacing: -.03em;
+      color: var(--gold);
+    }
+    .modal-head p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Tier Selector inside modal */
+    .tiers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tier-option {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .tier-option:hover {
+      border-color: var(--gold);
+      background: rgba(255, 207, 102, 0.08);
+    }
+    .tier-option.selected {
+      border-color: var(--gold);
+      background: rgba(255, 207, 102, 0.12);
+      box-shadow: 0 0 15px rgba(255, 207, 102, 0.15);
+    }
+    .tier-info strong {
+      display: block;
+      font-size: 14px;
+      color: var(--cream);
+    }
+    .tier-info span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .tier-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    /* Fake Checkout Processing */
+    .checkout-flow {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px dashed rgba(255, 207, 102, 0.3);
+    }
+    .flow-step {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .flow-step.done {
+      color: var(--green);
+    }
+    .flow-step.active {
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .flow-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 207, 102, 0.3);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-buy-win {
+      min-height: 52px;
+      border-radius: 16px;
+      border: 0;
+      background: linear-gradient(135deg, #ffd700, #ff9900);
+      color: #171003;
+      font-size: 15px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 30px rgba(255, 207, 102, 0.35);
+      transition: .15s ease;
+    }
+    .btn-buy-win:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+    .btn-accept-shame {
+      min-height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      transition: .15s ease;
+    }
+    .btn-accept-shame:hover {
+      color: var(--cream);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .stat-card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 18px;
+      font-weight: 950;
+      color: var(--gold);
+    }
+    .stat-lbl {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .versus-banner { gap: 6px; }
+      .fighter-avatar { width: 46px; height: 46px; font-size: 22px; }
+      .btn-move { min-height: 76px; }
+      .move-emoji { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../" class="back-btn">← Kais Arcade</a>
+    <div class="brand-title">✊ RPS PAY-TO-WIN</div>
+    <div class="top-right">
+      <div class="hud-badge"><span id="arcadeCoinsBadge">🪙 0</span></div>
+      <button class="sound-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- P2W Ribbon -->
+    <div class="p2w-ribbon">
+      <div class="p2w-left">
+        <span class="p2w-badge">Pay-to-Win Enabled</span>
+        <span class="p2w-title">Fairness is a subscription service.</span>
+      </div>
+      <div class="p2w-spent">
+        Invested: <span id="totalInvestedText">$0</span>
+      </div>
+    </div>
+
+    <!-- Main Arena Stage -->
+    <div class="stage">
+
+      <!-- Versus Banner -->
+      <div class="versus-banner">
+        <div class="fighter-card">
+          <div class="fighter-avatar" id="playerAvatar">😎</div>
+          <div class="fighter-name">You (Underdog)</div>
+          <div class="fighter-stat" id="playerWins">Wins: 0</div>
+        </div>
+
+        <div class="vs-tag">VS</div>
+
+        <div class="fighter-card">
+          <div class="fighter-avatar">🤖</div>
+          <div class="fighter-name">Chad_Algorithm_v9</div>
+          <div class="fighter-stat" id="cpuWins">Wins: 0</div>
+        </div>
+      </div>
+
+      <!-- Hand Clash Arena -->
+      <div class="clash-zone">
+        <div class="clash-hand hand-player" id="playerHand">✊</div>
+        <div class="clash-hand hand-cpu" id="cpuHand">✌️</div>
+      </div>
+
+      <!-- Result Announcement -->
+      <div class="result-announcement">
+        <div class="result-main" id="resultMain">Choose your move</div>
+        <div class="result-sub" id="resultSub">Press R, P, or S on your keyboard or tap below</div>
+      </div>
+
+      <!-- Move Selectors -->
+      <div class="moves-tray">
+        <button class="btn-move" data-move="rock">
+          <span class="move-emoji">✊</span>
+          <span class="move-title">Rock</span>
+          <span class="move-key">R</span>
+        </button>
+        <button class="btn-move" data-move="paper">
+          <span class="move-emoji">✋</span>
+          <span class="move-title">Paper</span>
+          <span class="move-key">P</span>
+        </button>
+        <button class="btn-move" data-move="scissors">
+          <span class="move-emoji">✌️</span>
+          <span class="move-title">Scissors</span>
+          <span class="move-key">S</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="statMatches">0</div>
+        <div class="stat-lbl">Matches Played</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statOverturns">0</div>
+        <div class="stat-lbl">Bought Wins 💸</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statLegitWins">0</div>
+        <div class="stat-lbl">Legit Wins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statROI">-100%</div>
+        <div class="stat-lbl">Calculated ROI</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Emergency Overturn Modal -->
+  <div class="overturn-modal" id="overturnModal">
+    <div class="overturn-card">
+
+      <div class="modal-head">
+        <div>
+          <h3>OVERTURN THIS LOSS?</h3>
+          <p>The system detected an unacceptable defeat. Restore competitive integrity by unlocking an expedited victory package.</p>
+        </div>
+      </div>
+
+      <div class="tiers-list" id="tiersList">
+        <div class="tier-option selected" data-price="99" data-name="Fairness Recalibration">
+          <div class="tier-info">
+            <strong>Tier 1: Fairness Recalibration</strong>
+            <span>Changes opponent's hand to your advantage</span>
+          </div>
+          <div class="tier-price">$99</div>
+        </div>
+
+        <div class="tier-option" data-price="249" data-name="Golden Scissors Perk">
+          <div class="tier-info">
+            <strong>Tier 2: Golden Scissors Protocol</strong>
+            <span>Your move cuts through everything including boulders</span>
+          </div>
+          <div class="tier-price">$249</div>
+        </div>
+
+        <div class="tier-option" data-price="599" data-name="Legal Injunction">
+          <div class="tier-info">
+            <strong>Tier 3: Retroactive Cease & Desist</strong>
+            <span>Disqualifies Chad_Algorithm_v9 for copyright infringement</span>
+          </div>
+          <div class="tier-price">$599</div>
+        </div>
+
+        <div class="tier-option" data-price="1999" data-name="Arcade Monopoly">
+          <div class="tier-info">
+            <strong>Tier 4: Buy the Kais Arcade LLC</strong>
+            <span>You own the server. Instant godhood status.</span>
+          </div>
+          <div class="tier-price">$1,999</div>
+        </div>
+      </div>
+
+      <!-- Checkout Flow Simulated Progress -->
+      <div class="checkout-flow" id="checkoutFlow">
+        <div class="flow-step" id="step1"><span class="flow-spinner"></span> <span>Routing transaction to Cayman Islands...</span></div>
+        <div class="flow-step" id="step2"><span>○</span> <span>Bribing competitive referee...</span></div>
+        <div class="flow-step" id="step3"><span>○</span> <span>Recalibrating server reality matrix...</span></div>
+        <div class="flow-step" id="step4"><span>○</span> <span>Generating counterfeit victory certificate...</span></div>
+      </div>
+
+      <div class="modal-actions" id="modalActions">
+        <button class="btn-buy-win" id="btnBuyWin">
+          PAY <span id="tierBuyPrice">$99</span> TO WIN INSTANTLY
+        </button>
+        <button class="btn-accept-shame" id="btnAcceptShame">
+          Accept Skill Issue & Remain Defeated
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    // ─── AUDIO ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = localStorage.getItem('ka_sound') !== 'off';
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.15) {
+      if (!soundOn || !actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain).connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e){}
+    }
+
+    const SFX = {
+      click() { playTone(850, 'sine', 0.05, 0.08); },
+      slam() {
+        playTone(120, 'triangle', 0.25, 0.25);
+        setTimeout(() => playTone(80, 'sine', 0.35, 0.2), 60);
+      },
+      cash() {
+        playTone(1320, 'sine', 0.08, 0.15);
+        setTimeout(() => playTone(1760, 'sine', 0.12, 0.18), 70);
+      },
+      loss() {
+        playTone(320, 'sawtooth', 0.2, 0.12);
+        setTimeout(() => playTone(280, 'sawtooth', 0.25, 0.14), 180);
+        setTimeout(() => playTone(220, 'sawtooth', 0.4, 0.18), 380);
+      },
+      fanfare() {
+        [523, 659, 784, 1046, 1318].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.16, 0.12), i * 75);
+        });
+      }
+    };
+
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.addEventListener('click', () => {
+      ensureAudio();
+      soundOn = !soundOn;
+      localStorage.setItem('ka_sound', soundOn ? 'on' : 'off');
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      if (soundOn) SFX.click();
+    });
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() {
+      try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; }
+    }
+    function saveArcadeState(s) {
+      localStorage.setItem('ka_state', JSON.stringify(s));
+    }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp;
+      s.coins += coins;
+      s.plays += 1;
+      saveArcadeState(s);
+      updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id);
+        s.coins += 50;
+        s.xp += 30;
+        saveArcadeState(s);
+        updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      document.getElementById('arcadeCoinsBadge').textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
+
+    // ─── GAME STATE ───
+    const MOVES = {
+      rock: { emoji: '✊', beats: 'scissors', losesTo: 'paper' },
+      paper: { emoji: '✋', beats: 'rock', losesTo: 'scissors' },
+      scissors: { emoji: '✌️', beats: 'paper', losesTo: 'rock' }
+    };
+
+    let totalInvested = 0;
+    let matchesCount = 0;
+    let legitWins = 0;
+    let boughtWins = 0;
+    let playerWinCount = 0;
+    let cpuWinCount = 0;
+    let selectedTierPrice = 99;
+    let selectedTierName = "Fairness Recalibration";
+    let lastPlayerMove = 'rock';
+    let lastCpuMove = 'paper';
+
+    // Coping quotes
+    const SHAME_QUOTES = [
+      "Accept Skill Issue & Remain Defeated",
+      "Blame 200ms Network Latency",
+      "Cry into Pillow (Free of charge)",
+      "Admit Chad_Algorithm is Superior",
+      "Close Laptop & Touch Grass"
+    ];
+
+    function updateStatsUI() {
+      document.getElementById('totalInvestedText').textContent = '$' + totalInvested.toLocaleString();
+      document.getElementById('statMatches').textContent = matchesCount;
+      document.getElementById('statOverturns').textContent = boughtWins;
+      document.getElementById('statLegitWins').textContent = legitWins;
+      document.getElementById('playerWins').textContent = 'Wins: ' + playerWinCount;
+      document.getElementById('cpuWins').textContent = 'Wins: ' + cpuWinCount;
+
+      const roi = totalInvested === 0 ? '0%' : (boughtWins > 0 ? ('-' + Math.min(999, Math.floor(totalInvested / 20)) + '%') : '-100%');
+      document.getElementById('statROI').textContent = roi;
+
+      // Cycle shame quote
+      const shameBtn = document.getElementById('btnAcceptShame');
+      shameBtn.textContent = SHAME_QUOTES[Math.floor(Math.random() * SHAME_QUOTES.length)];
+    }
+
+    // ─── PLAY ROUND ───
+    function playRound(playerMove) {
+      ensureAudio();
+      matchesCount++;
+      lastPlayerMove = playerMove;
+
+      const playerHandEl = document.getElementById('playerHand');
+      const cpuHandEl = document.getElementById('cpuHand');
+      const resultMainEl = document.getElementById('resultMain');
+      const resultSubEl = document.getElementById('resultSub');
+
+      // AI Logic: Subtle Rigging (65% chance of countering player)
+      let cpuMove;
+      const roll = Math.random();
+      if (roll < 0.65) {
+        // AI chooses winning move
+        cpuMove = MOVES[playerMove].losesTo;
+      } else if (roll < 0.85) {
+        // Tie
+        cpuMove = playerMove;
+      } else {
+        // Fair player win
+        cpuMove = MOVES[playerMove].beats;
+      }
+      lastCpuMove = cpuMove;
+
+      // Animation
+      playerHandEl.textContent = '✊';
+      cpuHandEl.textContent = '✊';
+      playerHandEl.classList.remove('slam');
+      cpuHandEl.classList.remove('slam');
+
+      resultMainEl.textContent = 'Rock... Paper... Scissors...';
+      resultSubEl.textContent = 'Shooting!';
+
+      // 3-beat countdown
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        playTone(600 + count * 150, 'sine', 0.06, 0.1);
+        if (count >= 3) {
+          clearInterval(interval);
+          revealResult(playerMove, cpuMove);
+        }
+      }, 200);
+    }
+
+    function revealResult(playerMove, cpuMove) {
+      const playerHandEl = document.getElementById('playerHand');
+      const cpuHandEl = document.getElementById('cpuHand');
+      const resultMainEl = document.getElementById('resultMain');
+      const resultSubEl = document.getElementById('resultSub');
+
+      playerHandEl.textContent = MOVES[playerMove].emoji;
+      cpuHandEl.textContent = MOVES[cpuMove].emoji;
+      playerHandEl.classList.add('slam');
+      cpuHandEl.classList.add('slam');
+      SFX.slam();
+
+      if (playerMove === cpuMove) {
+        // Tie
+        resultMainEl.textContent = "STALEMATE (TIE)";
+        resultMainEl.style.color = "var(--gold)";
+        resultSubEl.textContent = "Neither paid enough to secure victory. Try again.";
+        awardArcadeXP(5, 1);
+      } else if (MOVES[playerMove].beats === cpuMove) {
+        // Player wins legitimately!
+        legitWins++;
+        playerWinCount++;
+        SFX.fanfare();
+        resultMainEl.textContent = "VICTORY! (ORGANIC)";
+        resultMainEl.style.color = "var(--green)";
+        resultSubEl.textContent = "You beat the algorithm without spending a dime! A miracle!";
+        awardArcadeXP(25, 15);
+        unlockArcadeAchievement('rps_legit_win', '🏆 Skill Based — Won RPS without paying $99!');
+      } else {
+        // Player Lost! Trigger Pay-to-Win modal!
+        cpuWinCount++;
+        SFX.loss();
+        resultMainEl.textContent = "CRUSHING DEFEAT";
+        resultMainEl.style.color = "var(--red)";
+        resultSubEl.textContent = "Chad_Algorithm_v9 outmaneuvered you with ruthless corporate precision.";
+        awardArcadeXP(5, 0);
+
+        // Prompt emergency pay-to-win modal after short pause
+        setTimeout(() => {
+          openOverturnModal();
+        }, 600);
+      }
+
+      updateStatsUI();
+    }
+
+    // Move button event listeners
+    document.querySelectorAll('.btn-move').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const move = e.currentTarget.dataset.move;
+        playRound(move);
+      });
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (document.getElementById('overturnModal').classList.contains('open')) return;
+      if (k === 'r') playRound('rock');
+      if (k === 'p') playRound('paper');
+      if (k === 's') playRound('scissors');
+    });
+
+    // ─── MODAL & TIER SELECTION ───
+    const overturnModal = document.getElementById('overturnModal');
+    function openOverturnModal() {
+      overturnModal.classList.add('open');
+      document.getElementById('checkoutFlow').style.display = 'none';
+      document.getElementById('modalActions').style.display = 'flex';
+      updateStatsUI();
+    }
+
+    document.querySelectorAll('.tier-option').forEach(tier => {
+      tier.addEventListener('click', (e) => {
+        ensureAudio();
+        document.querySelectorAll('.tier-option').forEach(t => t.classList.remove('selected'));
+        tier.classList.add('selected');
+        selectedTierPrice = parseInt(tier.dataset.price);
+        selectedTierName = tier.dataset.name;
+        document.getElementById('tierBuyPrice').textContent = '$' + selectedTierPrice.toLocaleString();
+        SFX.click();
+      });
+    });
+
+    document.getElementById('btnAcceptShame').addEventListener('click', () => {
+      ensureAudio();
+      overturnModal.classList.remove('open');
+      SFX.click();
+    });
+
+    // Process Pay-to-Win purchase
+    document.getElementById('btnBuyWin').addEventListener('click', () => {
+      ensureAudio();
+      const checkoutFlow = document.getElementById('checkoutFlow');
+      const modalActions = document.getElementById('modalActions');
+
+      modalActions.style.display = 'none';
+      checkoutFlow.style.display = 'flex';
+      SFX.cash();
+
+      const steps = ['step1', 'step2', 'step3', 'step4'];
+      let cur = 0;
+
+      function nextStep() {
+        if (cur < steps.length) {
+          const el = document.getElementById(steps[cur]);
+          el.className = 'flow-step active';
+          el.innerHTML = '<span class="flow-spinner"></span> <span>' + el.querySelector('span:last-child').textContent + '</span>';
+          SFX.click();
+
+          setTimeout(() => {
+            el.className = 'flow-step done';
+            el.innerHTML = '<span>✓</span> <span>' + el.querySelector('span:last-child').textContent + '</span>';
+            cur++;
+            nextStep();
+          }, 450);
+        } else {
+          // Finished checkout!
+          finalizeOverturn();
+        }
+      }
+      nextStep();
+    });
+
+    function finalizeOverturn() {
+      totalInvested += selectedTierPrice;
+      boughtWins++;
+      playerWinCount++;
+      cpuWinCount = Math.max(0, cpuWinCount - 1);
+
+      overturnModal.classList.remove('open');
+      SFX.fanfare();
+
+      // Recalibrate UI
+      const playerHandEl = document.getElementById('playerHand');
+      const cpuHandEl = document.getElementById('cpuHand');
+      const resultMainEl = document.getElementById('resultMain');
+      const resultSubEl = document.getElementById('resultSub');
+
+      // Force change CPU's hand so you win!
+      const winningMoveForPlayer = MOVES[lastPlayerMove].beats;
+      cpuHandEl.textContent = MOVES[winningMoveForPlayer].emoji;
+      cpuHandEl.classList.add('slam');
+
+      resultMainEl.textContent = "RESULT OVERTURNED: VICTORY!";
+      resultMainEl.style.color = "var(--gold)";
+      resultSubEl.textContent = "Processed $" + selectedTierPrice.toLocaleString() + " payment. Fairness successfully restored.";
+
+      awardArcadeXP(50, 100);
+      unlockArcadeAchievement('rps_whale', '💸 Pay to Win Champion — Overturned defeat with cold hard cash!');
+      if (totalInvested >= 1000) {
+        unlockArcadeAchievement('rps_billionaire', '💎 Supreme Investor — Spent $1,000+ fixing RPS matches!');
+      }
+
+      updateStatsUI();
+    }
+
+    updateStatsUI();
+  })();
+  </script>
+</body>
+</html>

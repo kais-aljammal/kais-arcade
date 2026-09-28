@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0b0e14"/>
+  <title>MyFitnessEx — Kais Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080a0f;
+      --card-bg: rgba(16, 20, 30, 0.75);
+      --border: rgba(255, 92, 102, 0.22);
+      --red: #ff5c66;
+      --red-glow: rgba(255, 92, 102, 0.3);
+      --green: #22c55e;
+      --orange: #f97316;
+      --blue: #007aff;
+      --gold: #ffcf66;
+      --text: #f3f4f6;
+      --muted: #94a3b8;
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; overflow-x: hidden; }
+    body {
+      background: radial-gradient(circle at 20% -10%, rgba(255, 92, 102, 0.12), transparent 45%),
+                  radial-gradient(circle at 80% 90%, rgba(0, 122, 255, 0.08), transparent 40%),
+                  linear-gradient(180deg, #0d111a, #06070a);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(13, 17, 26, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 92, 102, 0.3);
+      background: rgba(255, 92, 102, 0.08);
+      transition: .15s ease;
+    }
+    .back-btn:hover { background: rgba(255, 92, 102, 0.2); }
+    .brand-title {
+      font-weight: 900;
+      font-size: clamp(15px, 3vw, 20px);
+      letter-spacing: -.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span { color: var(--red); }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(16, 20, 30, 0.6);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(16, 20, 30, 0.6);
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      transition: .15s ease;
+    }
+
+    /* Main Container */
+    .app {
+      width: min(100%, 1120px);
+      margin: 0 auto;
+      padding: 16px clamp(10px, 2.5vw, 24px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Disclaimer Banner */
+    .satire-banner {
+      border: 1px solid rgba(255, 92, 102, 0.35);
+      background: linear-gradient(135deg, rgba(255, 92, 102, 0.15), rgba(16, 20, 30, 0.7));
+      border-radius: 16px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 11px;
+      color: #fca5a5;
+    }
+
+    /* Two Column Workspace */
+    .game-split {
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    /* Left Column: Dashboard & Food Logger */
+    .dashboard-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .calorie-card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      backdrop-filter: blur(14px);
+    }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cal-title {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .threat-tag {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+    .threat-tag.danger {
+      background: rgba(255, 92, 102, 0.2);
+      color: var(--red);
+      animation: blinkRed 1s infinite alternate;
+    }
+    @keyframes blinkRed { from { opacity: 0.7; } to { opacity: 1; } }
+
+    .cal-visual {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .ring-wrap {
+      width: 100px;
+      height: 100px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .ring-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 9;
+    }
+    .ring-fill {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 264;
+      transition: stroke-dashoffset .5s ease, stroke .3s ease;
+    }
+    .ring-center-text {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 950;
+      color: var(--text);
+    }
+    .cal-numbers {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cal-big {
+      font-size: 34px;
+      font-weight: 1000;
+      letter-spacing: -.04em;
+    }
+    .cal-limit {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .cal-deadline {
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Ex Character Selector */
+    .ex-picker {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .picker-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .ex-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .ex-btn {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 14px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text);
+      transition: .15s ease;
+    }
+    .ex-btn:hover { border-color: var(--red); background: rgba(255, 92, 102, 0.08); }
+    .ex-btn.selected {
+      border-color: var(--red);
+      background: rgba(255, 92, 102, 0.15);
+      box-shadow: 0 0 16px rgba(255, 92, 102, 0.2);
+    }
+    .ex-avatar { font-size: 24px; }
+    .ex-name { font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .ex-archetype { font-size: 8px; color: var(--muted); }
+
+    /* Food Menu Items */
+    .food-card {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .food-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .btn-food {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.025);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text);
+      transition: all .14s ease;
+      text-align: left;
+    }
+    .btn-food:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .btn-food:active { transform: scale(0.97); }
+    .food-title { font-size: 12px; font-weight: 700; line-height: 1.25; }
+    .food-cal { font-size: 11px; font-weight: 900; color: var(--red); white-space: nowrap; }
+
+    .food-tools {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .tool-btn {
+      flex: 1;
+      min-height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+      transition: .15s ease;
+    }
+    .tool-btn:hover { border-color: var(--text); }
+    .btn-trigger-9pm {
+      background: linear-gradient(135deg, #ff5c66, #e11d48);
+      color: #fff;
+      border: 0;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(255, 92, 102, 0.35);
+    }
+    .btn-trigger-9pm:hover { filter: brightness(1.1); }
+
+    /* Right Column: iMessage Phone Simulator */
+    .phone-mockup {
+      border: 2px solid #2d3345;
+      background: #000;
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+      min-height: 580px;
+    }
+
+    /* iPhone Status Bar */
+    .phone-topbar {
+      padding: 12px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .island-pill {
+      width: 75px;
+      height: 20px;
+      background: #111;
+      border-radius: 20px;
+    }
+
+    /* Contact Banner */
+    .chat-header {
+      padding: 8px 16px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #1a1e28;
+      background: #0b0d13;
+    }
+    .contact-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #2a2e3d;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+    }
+    .contact-info {
+      flex: 1;
+    }
+    .contact-name {
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+    }
+    .contact-status {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Chat Messages Stream */
+    .chat-stream {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      max-height: 400px;
+      background: #050608;
+    }
+    .chat-date-stamp {
+      font-size: 10px;
+      color: #555c6d;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Message Bubbles */
+    .bubble-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 82%;
+    }
+    .bubble-row.sent {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .bubble-row.received {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 13px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .bubble-sent {
+      background: var(--blue);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .bubble-received {
+      background: #262933;
+      color: #f1f5f9;
+      border-bottom-left-radius: 4px;
+    }
+    .bubble-meta {
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    /* Typing Indicator */
+    .typing-bubble {
+      display: none;
+      align-self: flex-start;
+      background: #262933;
+      padding: 8px 14px;
+      border-radius: 18px;
+      gap: 4px;
+      align-items: center;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #94a3b8;
+      border-radius: 50%;
+      animation: typePulse 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: .2s; }
+    .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes typePulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Damage Control Quick Actions */
+    .damage-control-bar {
+      padding: 12px 14px;
+      border-top: 1px solid #1a1e28;
+      background: #0b0d13;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dc-title {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+    }
+    .dc-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .btn-dc {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 92, 102, 0.3);
+      background: rgba(255, 92, 102, 0.08);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      line-height: 1.25;
+      transition: .15s ease;
+    }
+    .btn-dc:hover {
+      background: rgba(255, 92, 102, 0.2);
+      border-color: var(--red);
+    }
+
+    /* Stats Ribbon */
+    .stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .stat-box {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-val { font-size: 18px; font-weight: 950; color: var(--gold); }
+    .stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+
+    @media (max-width: 820px) {
+      .game-split { grid-template-columns: 1fr; }
+      .ex-options { grid-template-columns: repeat(2, 1fr); }
+      .stats-ribbon { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../" class="back-btn">← Kais Arcade</a>
+    <div class="brand-title">💔 MyFitness<span>Ex</span></div>
+    <div class="top-right">
+      <div class="hud-badge"><span id="arcadeCoinsBadge">🪙 0</span></div>
+      <button class="sound-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- Satirical Disclaimer -->
+    <div class="satire-banner">
+      <span>⚠️ <strong>100% Satirical Browser Game:</strong> No real SMS, no phone numbers, no real exes harmed. Fully fictional simulation.</span>
+      <span style="font-weight:900;">TARGET: 1,800 KCAL</span>
+    </div>
+
+    <!-- Main Game Split -->
+    <div class="game-split">
+
+      <!-- Left Column: Calorie Dashboard & Actions -->
+      <div class="dashboard-col">
+
+        <!-- Calorie Card -->
+        <div class="calorie-card">
+          <div class="cal-header">
+            <div class="cal-title">Daily Calorie Budget</div>
+            <div class="threat-tag" id="threatTag">Dignity Intact</div>
+          </div>
+
+          <div class="cal-visual">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="42"/>
+              </svg>
+              <div class="ring-center-text" id="ringPct">0%</div>
+            </div>
+
+            <div class="cal-numbers">
+              <div class="cal-big"><span id="calCurrent">0</span> <small style="font-size:14px;color:var(--muted)">/ 1,800 kcal</small></div>
+              <div class="cal-limit">Ex-Text Penalty Threshold: <strong>1,800 kcal</strong></div>
+              <div class="cal-deadline">
+                <span>⏰ Deadline:</span> <span id="clockDisplay">2:45 PM (Safe)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ex Picker -->
+        <div class="ex-picker">
+          <div class="picker-label">Select Your Fictional Ex</div>
+          <div class="ex-options">
+
+            <button class="ex-btn selected" data-ex="tyler">
+              <span class="ex-avatar">🏋️</span>
+              <span class="ex-name">Toxic Tyler</span>
+              <span class="ex-archetype">Gym Bro · Leaves on Read</span>
+            </button>
+
+            <button class="ex-btn" data-ex="emma">
+              <span class="ex-avatar">☕</span>
+              <span class="ex-name">Emma</span>
+              <span class="ex-archetype">Paragraph Therapist</span>
+            </button>
+
+            <button class="ex-btn" data-ex="chad">
+              <span class="ex-avatar">🚀</span>
+              <span class="ex-name">Crypto Chad</span>
+              <span class="ex-archetype">Solana Maximalist</span>
+            </button>
+
+            <button class="ex-btn" data-ex="greg">
+              <span class="ex-avatar">👻</span>
+              <span class="ex-name">Ghost Greg</span>
+              <span class="ex-archetype">Types then vanishes</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Food Logging Menu -->
+        <div class="food-card">
+          <div class="picker-label">Log Emotional Fuel</div>
+          <div class="food-grid">
+
+            <button class="btn-food" data-name="3AM Shredded Cheese" data-cal="450">
+              <span class="food-title">🧀 3AM Handful of Cheese</span>
+              <span class="food-cal">+450</span>
+            </button>
+
+            <button class="btn-food" data-name="Sad Ice Cream Tub" data-cal="820">
+              <span class="food-title">🍨 Sad Pint of Ice Cream</span>
+              <span class="food-cal">+820</span>
+            </button>
+
+            <button class="btn-food" data-name="Entire Pepperoni Pizza" data-cal="1400">
+              <span class="food-title">🍕 Entire Medium Pizza</span>
+              <span class="food-cal">+1,400</span>
+            </button>
+
+            <button class="btn-food" data-name="Matcha Latte (90% syrup)" data-cal="390">
+              <span class="food-title">🍵 "Healthy" Sweet Matcha</span>
+              <span class="food-cal">+390</span>
+            </button>
+
+            <button class="btn-food" data-name="Mega Energy Drink" data-cal="210">
+              <span class="food-title">⚡ Heart-Palpitation Drink</span>
+              <span class="food-cal">+210</span>
+            </button>
+
+            <button class="btn-food" data-name="Lonely Single Celery" data-cal="8">
+              <span class="food-title">🥬 Single Celery Stick</span>
+              <span class="food-cal">+8</span>
+            </button>
+
+          </div>
+
+          <div class="food-tools">
+            <button class="tool-btn" id="btnCustomFood">+ Random Panic Snack</button>
+            <button class="tool-btn btn-trigger-9pm" id="btnFastForward">Fast-Forward to 9:00 PM ⏰</button>
+            <button class="tool-btn" id="btnResetDay" style="color:var(--muted)">Reset Day</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: iPhone Chat Simulator -->
+      <div class="phone-mockup">
+
+        <!-- Status Bar -->
+        <div class="phone-topbar">
+          <span>9:41</span>
+          <div class="island-pill"></div>
+          <span>5G 📶 14% 🪫</span>
+        </div>
+
+        <!-- Contact Header -->
+        <div class="chat-header">
+          <div class="contact-avatar" id="contactAvatar">🏋️</div>
+          <div class="contact-info">
+            <div class="contact-name" id="contactName">Toxic Tyler (Ex)</div>
+            <div class="contact-status" id="contactStatus">iMessage · Delivered</div>
+          </div>
+        </div>
+
+        <!-- Chat Stream -->
+        <div class="chat-stream" id="chatStream">
+          <div class="chat-date-stamp">Today · Threat Level Low</div>
+
+          <div class="bubble-row received">
+            <div class="bubble bubble-received">Hey, can you return my favorite hoodie or did you burn it?</div>
+            <div class="bubble-meta">Yesterday 11:22 PM</div>
+          </div>
+
+          <div class="bubble-row sent">
+            <div class="bubble bubble-sent">I don't even know what hoodie you're talking about. Don't text me.</div>
+            <div class="bubble-meta">Yesterday 11:24 PM · Read</div>
+          </div>
+        </div>
+
+        <!-- Typing Bubble -->
+        <div class="typing-bubble" id="typingBubble">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+
+        <!-- Emergency Damage Control Bar -->
+        <div class="damage-control-bar" id="damageControlBar">
+          <div class="dc-title">
+            <span>🚨 EMERGENCY DAMAGE CONTROL (5s)</span>
+            <span id="dcTimer">5</span>
+          </div>
+          <div class="dc-options">
+            <button class="btn-dc" data-excuse="therapist">"Oops meant for my therapist ignore that"</button>
+            <button class="btn-dc" data-excuse="hacked">"My account was hacked by crypto bots"</button>
+            <button class="btn-dc" data-excuse="dog">"My dog stepped on my phone"</button>
+            <button class="btn-dc" data-excuse="doubledown">"I said what I said. Answer me."</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Stats Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stat-box">
+        <div class="stat-val" id="statDaysSurvived">0</div>
+        <div class="stat-lbl">Days Dignity Survived</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statTextsSent">0</div>
+        <div class="stat-lbl">Humiliating Texts Sent</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statExcusesLanded">0</div>
+        <div class="stat-lbl">Excuses Believed</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statCaloriesLogged">0</div>
+        <div class="stat-lbl">Total Calories Eaten</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  (() => {
+    // ─── AUDIO ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = localStorage.getItem('ka_sound') !== 'off';
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.15) {
+      if (!soundOn || !actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain).connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e){}
+    }
+
+    const SFX = {
+      click() { playTone(800, 'sine', 0.05, 0.08); },
+      chomp() {
+        playTone(350, 'triangle', 0.08, 0.1);
+        setTimeout(() => playTone(240, 'triangle', 0.1, 0.12), 60);
+      },
+      swoosh() {
+        if (!soundOn || !actx) return;
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, actx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1400, actx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.12, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.18);
+        osc.connect(gain).connect(actx.destination);
+        osc.start(); osc.stop(actx.currentTime + 0.18);
+      },
+      ding() {
+        playTone(1760, 'sine', 0.25, 0.15);
+      },
+      alarm() {
+        playTone(880, 'sawtooth', 0.15, 0.15);
+        setTimeout(() => playTone(700, 'sawtooth', 0.15, 0.15), 120);
+      }
+    };
+
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.addEventListener('click', () => {
+      ensureAudio();
+      soundOn = !soundOn;
+      localStorage.setItem('ka_sound', soundOn ? 'on' : 'off');
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      if (soundOn) SFX.click();
+    });
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() {
+      try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; }
+    }
+    function saveArcadeState(s) {
+      localStorage.setItem('ka_state', JSON.stringify(s));
+    }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp;
+      s.coins += coins;
+      s.plays += 1;
+      saveArcadeState(s);
+      updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id);
+        s.coins += 50;
+        s.xp += 30;
+        saveArcadeState(s);
+        updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      document.getElementById('arcadeCoinsBadge').textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
+
+    // ─── EX PROFILES & DIALOGUES ───
+    const EX_DATA = {
+      tyler: {
+        name: 'Toxic Tyler',
+        avatar: '🏋️',
+        texts: [
+          "hey... I saw someone wearing gym shorts like yours today and almost cried on the squat rack.",
+          "are you still listening to that indie band we used to pretend to like?",
+          "u up? my fitness app made me send this but honestly do you still think about me?",
+          "i hit a new PR on deadlift today. thought you should know."
+        ],
+        replies: [
+          "k.",
+          "bro it is literally 9pm why are you texting me about deadlifts",
+          "delete my number fr",
+          "who is this again?"
+        ]
+      },
+      emma: {
+        name: 'Emma',
+        avatar: '☕',
+        texts: [
+          "I know we said no contact, but I feel like our unhealed inner children deserve closure.",
+          "I just ate a whole pizza and the guilt made me realize I never truly forgave you.",
+          "Remember that trip to Portland? You still owe me $14 for the gluten-free waffle."
+        ],
+        replies: [
+          "I have been discussing this exact pattern with my therapist. It's fascinating how your avoidant attachment flares up after carbs.",
+          "I hope you find peace, but please respect my emotional boundaries.",
+          "It was actually $16 with tip. Sending Venmo request now."
+        ]
+      },
+      chad: {
+        name: 'Crypto Chad',
+        avatar: '🚀',
+        texts: [
+          "Hey... remember when we talked about buying an apartment in Miami? I miss you.",
+          "I just went 400 calories over my macros and realized nothing matters except you and Bitcoin.",
+          "Do you think we could have worked out if I didn't invest our vacation fund into DogeNFTs?"
+        ],
+        replies: [
+          "Bro I am literally at a Web3 networking mixer in Dubai right now. Also buy $SOL.",
+          "WAGMI without you honestly, but respect the hustle.",
+          "I told you to hold the floor price! Whatever, hope you're good."
+        ]
+      },
+      greg: {
+        name: 'Ghost Greg',
+        avatar: '👻',
+        texts: [
+          "Are you alive? It's been 8 months and NutriBot is exposing me.",
+          "I know you won't reply, but I miss how you used to ignore my memes in real time.",
+          "Hey. Just checking if you vanished into a parallel dimension."
+        ],
+        replies: [
+          "...",
+          "[Message not delivered: Recipient has blocked all existential drama]",
+          "sorry was taking a nap (8 months later)"
+        ]
+      }
+    };
+
+    let currentEx = 'tyler';
+    let currentCalories = 0;
+    const LIMIT = 1800;
+    let dayOver = false;
+    let textSentTriggered = false;
+    let dcCountdown = null;
+
+    let stats = {
+      daysSurvived: 0,
+      textsSent: 0,
+      excusesLanded: 0,
+      caloriesLogged: 0
+    };
+
+    function updateDashboard() {
+      document.getElementById('calCurrent').textContent = currentCalories.toLocaleString();
+      document.getElementById('statCaloriesLogged').textContent = stats.caloriesLogged.toLocaleString();
+      document.getElementById('statDaysSurvived').textContent = stats.daysSurvived;
+      document.getElementById('statTextsSent').textContent = stats.textsSent;
+      document.getElementById('statExcusesLanded').textContent = stats.excusesLanded;
+
+      // Update ring
+      const pct = Math.min(200, Math.round((currentCalories / LIMIT) * 100));
+      document.getElementById('ringPct').textContent = pct + '%';
+
+      const strokeOffset = Math.max(0, 264 - (264 * Math.min(1, currentCalories / LIMIT)));
+      const fillEl = document.getElementById('ringFill');
+      fillEl.style.strokeDashoffset = strokeOffset;
+
+      const threatEl = document.getElementById('threatTag');
+      if (currentCalories < 1200) {
+        fillEl.style.stroke = 'var(--green)';
+        threatEl.textContent = 'Dignity Intact';
+        threatEl.className = 'threat-tag';
+      } else if (currentCalories < LIMIT) {
+        fillEl.style.stroke = 'var(--orange)';
+        threatEl.textContent = 'Danger Zone';
+        threatEl.className = 'threat-tag';
+      } else {
+        fillEl.style.stroke = 'var(--red)';
+        threatEl.textContent = '🚨 OVER LIMIT';
+        threatEl.className = 'threat-tag danger';
+      }
+    }
+
+    // ─── FOOD LOGGING ───
+    document.querySelectorAll('.btn-food').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        ensureAudio();
+        const cal = parseInt(btn.dataset.cal);
+        const name = btn.dataset.name;
+        currentCalories += cal;
+        stats.caloriesLogged += cal;
+        SFX.chomp();
+        updateDashboard();
+
+        if (currentCalories >= LIMIT && !textSentTriggered) {
+          triggerOverLimitText();
+        }
+      });
+    });
+
+    document.getElementById('btnCustomFood').addEventListener('click', () => {
+      ensureAudio();
+      const funnyFoods = [
+        { name: "3-day-old takeout dumplings", cal: 520 },
+        { name: "Entire box of Pop-Tarts while dissociating", cal: 760 },
+        { name: "Spicy ramen with 3 extra cheese slices", cal: 890 },
+        { name: "Guilt-free air (actually sugar cookies)", cal: 410 }
+      ];
+      const pick = funnyFoods[Math.floor(Math.random() * funnyFoods.length)];
+      currentCalories += pick.cal;
+      stats.caloriesLogged += pick.cal;
+      SFX.chomp();
+      alert("Logged: " + pick.name + " (+" + pick.cal + " kcal)!");
+      updateDashboard();
+
+      if (currentCalories >= LIMIT && !textSentTriggered) {
+        triggerOverLimitText();
+      }
+    });
+
+    // ─── EX PICKER ───
+    document.querySelectorAll('.ex-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ensureAudio();
+        document.querySelectorAll('.ex-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        currentEx = btn.dataset.ex;
+        const ex = EX_DATA[currentEx];
+        document.getElementById('contactName').textContent = ex.name + " (Ex)";
+        document.getElementById('contactAvatar').textContent = ex.avatar;
+        SFX.click();
+      });
+    });
+
+    // ─── TRIGGER EX TEXT MECHANIC ───
+    function triggerOverLimitText() {
+      textSentTriggered = true;
+      SFX.alarm();
+
+      const ex = EX_DATA[currentEx];
+      const randomText = ex.texts[Math.floor(Math.random() * ex.texts.length)];
+
+      // Append bot auto-sent text to chat stream
+      const stream = document.getElementById('chatStream');
+      const row = document.createElement('div');
+      row.className = 'bubble-row sent';
+      row.innerHTML = `
+        <div class="bubble bubble-sent">🤖 [MyFitnessEx Bot]: User exceeded 1,800 kcal limit. Auto-sending penalty confession: "${randomText}"</div>
+        <div class="bubble-meta">Just now · Delivered</div>
+      `;
+      stream.appendChild(row);
+      stream.scrollTop = stream.scrollHeight;
+      SFX.swoosh();
+
+      stats.textsSent++;
+      awardArcadeXP(15, 5);
+
+      // Start 5-second Damage Control countdown
+      startDamageControl();
+    }
+
+    function startDamageControl() {
+      const dcBar = document.getElementById('damageControlBar');
+      const timerEl = document.getElementById('dcTimer');
+      dcBar.style.display = 'flex';
+      let timeLeft = 5;
+      timerEl.textContent = timeLeft;
+
+      if (dcCountdown) clearInterval(dcCountdown);
+      dcCountdown = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(dcCountdown);
+          dcBar.style.display = 'none';
+          triggerExReply("no_excuse");
+        }
+      }, 1000);
+    }
+
+    // Damage Control Button Handlers
+    document.querySelectorAll('.btn-dc').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ensureAudio();
+        clearInterval(dcCountdown);
+        document.getElementById('damageControlBar').style.display = 'none';
+        const excuse = btn.dataset.excuse;
+        const text = btn.textContent.replace(/"/g, '');
+
+        const stream = document.getElementById('chatStream');
+        const row = document.createElement('div');
+        row.className = 'bubble-row sent';
+        row.innerHTML = `
+          <div class="bubble bubble-sent">${text}</div>
+          <div class="bubble-meta">Just now · Read</div>
+        `;
+        stream.appendChild(row);
+        stream.scrollTop = stream.scrollHeight;
+        SFX.swoosh();
+
+        stats.excusesLanded++;
+        awardArcadeXP(25, 10);
+        unlockArcadeAchievement('ex_damage_control', '🛡️ Damage Control — Rapidly salvaged your dignity!');
+
+        triggerExReply(excuse);
+      });
+    });
+
+    function triggerExReply(excuseType) {
+      const typingBubble = document.getElementById('typingBubble');
+      typingBubble.style.display = 'flex';
+      const stream = document.getElementById('chatStream');
+      stream.appendChild(typingBubble);
+      stream.scrollTop = stream.scrollHeight;
+
+      setTimeout(() => {
+        typingBubble.style.display = 'none';
+        const ex = EX_DATA[currentEx];
+        const reply = ex.replies[Math.floor(Math.random() * ex.replies.length)];
+
+        const row = document.createElement('div');
+        row.className = 'bubble-row received';
+        row.innerHTML = `
+          <div class="bubble bubble-received">${reply}</div>
+          <div class="bubble-meta">Just now</div>
+        `;
+        stream.appendChild(row);
+        stream.scrollTop = stream.scrollHeight;
+        SFX.ding();
+      }, 2000);
+    }
+
+    // ─── FAST-FORWARD TO 9:00 PM ───
+    document.getElementById('btnFastForward').addEventListener('click', () => {
+      ensureAudio();
+      document.getElementById('clockDisplay').textContent = "9:00 PM (EVALUATION)";
+      if (currentCalories <= LIMIT) {
+        // You survived!
+        stats.daysSurvived++;
+        awardArcadeXP(40, 25);
+        unlockArcadeAchievement('ex_survived_day', '🥗 Calorie King — Stayed under limit and avoided texting your ex!');
+        alert("🎉 9:00 PM Reached! You survived the day with " + currentCalories + " kcal. Dignity intact!");
+      } else {
+        if (!textSentTriggered) triggerOverLimitText();
+      }
+      updateDashboard();
+    });
+
+    // ─── RESET DAY ───
+    document.getElementById('btnResetDay').addEventListener('click', () => {
+      ensureAudio();
+      currentCalories = 0;
+      textSentTriggered = false;
+      document.getElementById('clockDisplay').textContent = "9:00 AM (Safe)";
+      SFX.click();
+      updateDashboard();
+    });
+
+    updateDashboard();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#060e1a"/>
+  <title>Existential Dread Life Clock — Kais Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050b14;
+      --card-bg: rgba(10, 22, 40, 0.72);
+      --border: rgba(96, 165, 250, 0.22);
+      --blue: #38bdf8;
+      --blue-glow: rgba(56, 189, 248, 0.3);
+      --gold: #ffcf66;
+      --red: #f43f5e;
+      --text: #f0f7ff;
+      --muted: #8ba2c4;
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; }
+    body {
+      background: radial-gradient(circle at 50% -10%, rgba(56, 189, 248, 0.15), transparent 50%),
+                  radial-gradient(circle at 80% 85%, rgba(255, 207, 102, 0.08), transparent 45%),
+                  linear-gradient(180deg, #071220, #03060a);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 24px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 18, 32, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(56, 189, 248, 0.08);
+      transition: .15s ease;
+    }
+    .back-btn:hover { background: rgba(56, 189, 248, 0.2); }
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(14px, 3vw, 19px);
+      letter-spacing: .08em;
+      color: var(--blue);
+      text-shadow: 0 0 16px var(--blue-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(10, 22, 40, 0.6);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(10, 22, 40, 0.6);
+      color: var(--blue);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    /* Main Container */
+    .app {
+      width: min(100%, 960px);
+      margin: 0 auto;
+      padding: 16px clamp(12px, 3vw, 24px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+    }
+
+    /* Date Selector Header */
+    .setup-card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(14px);
+    }
+    .setup-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .setup-title {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .date-input {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.5);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 14px;
+      outline: none;
+    }
+    .btn-calc {
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 0;
+      background: var(--blue);
+      color: #03101c;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px var(--blue-glow);
+      transition: .15s ease;
+    }
+    .btn-calc:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    .preset-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 11px;
+      color: var(--muted);
+      transition: .14s ease;
+    }
+    .chip:hover { border-color: var(--blue); color: var(--text); }
+
+    /* Live Spinning Milliseconds Hero */
+    .hero-ticker {
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.12), transparent 70%), var(--card-bg);
+      border-radius: var(--radius);
+      padding: clamp(24px, 4vw, 36px) 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      backdrop-filter: blur(14px);
+    }
+    .hero-eyebrow {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+    .live-seconds-big {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(34px, 8vw, 64px);
+      font-weight: 900;
+      letter-spacing: -.03em;
+      color: var(--text);
+      text-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+    }
+    .live-ms-tail {
+      font-size: clamp(16px, 3.5vw, 24px);
+      color: var(--gold);
+    }
+    .hero-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Cosmic Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .telemetry-card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+    }
+    .tele-icon {
+      font-size: 24px;
+    }
+    .tele-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(18px, 3.5vw, 24px);
+      font-weight: 900;
+      color: var(--text);
+    }
+    .tele-lbl {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* Historical Peers Card */
+    .peer-card {
+      border: 1px solid rgba(255, 207, 102, 0.3);
+      background: linear-gradient(135deg, rgba(255, 207, 102, 0.08), rgba(10, 22, 40, 0.7));
+      border-radius: 20px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .peer-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .peer-body {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #fce7b2;
+    }
+
+    /* Lifespan Progress Bar */
+    .lifespan-card {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .life-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .life-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+    .life-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue), var(--gold), var(--red));
+      transition: width .5s ease;
+    }
+
+    @media (max-width: 720px) {
+      .telemetry-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .telemetry-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../" class="back-btn">← Kais Arcade</a>
+    <div class="brand-title">⏳ EXISTENTIAL CLOCK</div>
+    <div class="top-right">
+      <div class="hud-badge"><span id="arcadeCoinsBadge">🪙 0</span></div>
+      <button class="sound-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- Date Setup -->
+    <div class="setup-card">
+      <div class="setup-top">
+        <span class="setup-title">Configure Temporal Anchor</span>
+        <div class="preset-chips">
+          <button class="chip" data-preset="2005-06-15">Gen Z (2005)</button>
+          <button class="chip" data-preset="1998-04-12">Late 90s (1998)</button>
+          <button class="chip" data-preset="1992-11-20">Millennial (1992)</button>
+          <button class="chip" data-preset="1985-08-30">Gen X / 80s (1985)</button>
+        </div>
+      </div>
+      <div class="input-row">
+        <input type="date" class="date-input" id="birthDateInput" value="2002-05-14"/>
+        <button class="btn-calc" id="btnUpdateClock">Recalibrate Reality ➔</button>
+      </div>
+    </div>
+
+    <!-- Live Spinning Millisecond Hero -->
+    <div class="hero-ticker">
+      <span class="hero-eyebrow">Precise Temporal Duration On Earth</span>
+      <div class="live-seconds-big">
+        <span id="liveSeconds">0</span>.<span class="live-ms-tail" id="liveMs">000</span>
+      </div>
+      <p class="hero-sub" id="heroSubText">Seconds of irreversible consciousness elapsed.</p>
+    </div>
+
+    <!-- Lifespan Progress -->
+    <div class="lifespan-card">
+      <div class="life-header">
+        <span>ESTIMATED LIFESPAN ELAPSED (AVG 80 YRS)</span>
+        <span id="lifespanPctText" style="color:var(--gold)">0%</span>
+      </div>
+      <div class="life-track">
+        <div class="life-fill" id="lifespanFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Cosmic Telemetry Grid -->
+    <div class="telemetry-grid">
+
+      <div class="telemetry-card">
+        <div class="tele-icon">🫀</div>
+        <div class="tele-val" id="teleHeartbeats">0</div>
+        <div class="tele-lbl">Estimated Heartbeats Pumped (~72 bpm)</div>
+      </div>
+
+      <div class="telemetry-card">
+        <div class="tele-icon">🫁</div>
+        <div class="tele-val" id="teleBreaths">0</div>
+        <div class="tele-lbl">Liters of Earth Atmosphere Inhaled</div>
+      </div>
+
+      <div class="telemetry-card">
+        <div class="tele-icon">🌌</div>
+        <div class="tele-val" id="teleMilkyWay">0 km</div>
+        <div class="tele-lbl">Distance Traveled Through Galactic Core (828k km/h)</div>
+      </div>
+
+      <div class="telemetry-card">
+        <div class="tele-icon">🌕</div>
+        <div class="tele-val" id="teleMoon">0</div>
+        <div class="tele-lbl">Full Lunar Cycles Survived</div>
+      </div>
+
+      <div class="telemetry-card">
+        <div class="tele-icon">🍕</div>
+        <div class="tele-val" id="telePizza">0</div>
+        <div class="tele-lbl">Estimated Pizza Slices Consumed</div>
+      </div>
+
+      <div class="telemetry-card">
+        <div class="tele-icon">💤</div>
+        <div class="tele-val" id="teleSleep">0 hrs</div>
+        <div class="tele-lbl">Hours Spent Unconscious in Bed (~33%)</div>
+      </div>
+
+    </div>
+
+    <!-- Historical Peer Comparison -->
+    <div class="peer-card">
+      <div class="peer-head">
+        <span>📜 HISTORICAL PEER BENCHMARK</span>
+      </div>
+      <div class="peer-body" id="peerText">
+        Calculating historical accomplishments at your exact age...
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  (() => {
+    // ─── AUDIO ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = localStorage.getItem('ka_sound') !== 'off';
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.1) {
+      if (!soundOn || !actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain).connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e){}
+    }
+
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.addEventListener('click', () => {
+      ensureAudio();
+      soundOn = !soundOn;
+      localStorage.setItem('ka_sound', soundOn ? 'on' : 'off');
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      if (soundOn) playTone(900, 'sine', 0.05, 0.08);
+    });
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() {
+      try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; }
+    }
+    function saveArcadeState(s) {
+      localStorage.setItem('ka_state', JSON.stringify(s));
+    }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp;
+      s.coins += coins;
+      s.plays += 1;
+      saveArcadeState(s);
+      updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id);
+        s.coins += 50;
+        s.xp += 30;
+        saveArcadeState(s);
+        updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      document.getElementById('arcadeCoinsBadge').textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
+
+    // ─── DATE CALCULATIONS ───
+    const inputDate = document.getElementById('birthDateInput');
+    let birthTime = new Date(inputDate.value).getTime();
+
+    // Historical accomplishments database
+    const PEERS = [
+      { age: 8, person: "Wolfgang Amadeus Mozart", deed: "composed his very first symphony (Symphony No. 1 in E-flat major)." },
+      { age: 16, person: "Joan of Arc", deed: "led the French army to miraculous victory against England." },
+      { age: 20, person: "Alexander the Great", deed: "ascended the throne of Macedonia and began conquering the known world." },
+      { age: 23, person: "Isaac Newton", deed: "invented calculus while quarantined during the Great Plague of London." },
+      { age: 26, person: "Albert Einstein", deed: "published four groundbreaking papers including Special Relativity in his 'Miracle Year'." },
+      { age: 31, person: "Ada Lovelace", deed: "wrote the world's very first computer algorithm." },
+      { age: 40, person: "Marie Curie", deed: "discovered radium and polonium, winning two Nobel Prizes." },
+      { age: 52, person: "William Shakespeare", deed: "had already written King Lear, Hamlet, and 37 timeless plays." },
+      { age: 62, person: "J.R.R. Tolkien", deed: "finally published The Fellowship of the Ring." }
+    ];
+
+    function updatePeer(years) {
+      let closest = PEERS[0];
+      let minDiff = 999;
+      PEERS.forEach(p => {
+        const diff = Math.abs(p.age - years);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = p;
+        }
+      });
+      document.getElementById('peerText').innerHTML = `At age <strong>${closest.age}</strong>, <strong>${closest.person}</strong> ${closest.deed} Meanwhile, you are testing a browser arcade game.`;
+    }
+
+    function renderFrame() {
+      const now = Date.now();
+      const elapsedMs = Math.max(0, now - birthTime);
+
+      const totalSeconds = Math.floor(elapsedMs / 1000);
+      const msRemainder = elapsedMs % 1000;
+      const years = elapsedMs / (1000 * 60 * 60 * 24 * 365.25);
+
+      document.getElementById('liveSeconds').textContent = totalSeconds.toLocaleString();
+      document.getElementById('liveMs').textContent = String(msRemainder).padStart(3, '0');
+
+      // Lifespan %
+      const lifePct = Math.min(100, (years / 80) * 100);
+      document.getElementById('lifespanPctText').textContent = lifePct.toFixed(2) + '%';
+      document.getElementById('lifespanFill').style.width = lifePct + '%';
+
+      // Telemetry
+      const minutes = elapsedMs / (1000 * 60);
+      const hours = minutes / 60;
+      const days = hours / 24;
+
+      document.getElementById('teleHeartbeats').textContent = Math.floor(minutes * 72).toLocaleString();
+      document.getElementById('teleBreaths').textContent = Math.floor(minutes * 16 * 0.5).toLocaleString() + ' L';
+      document.getElementById('teleMilkyWay').textContent = (Math.floor(hours * 828000) / 1000000).toFixed(1) + 'M km';
+      document.getElementById('teleMoon').textContent = Math.floor(days / 29.53).toLocaleString();
+      document.getElementById('telePizza').textContent = Math.floor(years * 46).toLocaleString() + ' slices';
+      document.getElementById('teleSleep').textContent = Math.floor(hours * 0.33).toLocaleString() + ' hrs';
+
+      requestAnimationFrame(renderFrame);
+    }
+    requestAnimationFrame(renderFrame);
+
+    function applyDate() {
+      birthTime = new Date(inputDate.value).getTime();
+      const years = (Date.now() - birthTime) / (1000 * 60 * 60 * 24 * 365.25);
+      updatePeer(Math.round(years));
+      awardArcadeXP(15, 10);
+      unlockArcadeAchievement('age_crisis', '💀 Existentialist — Faced your chronological mortality!');
+    }
+
+    document.getElementById('btnUpdateClock').addEventListener('click', applyDate);
+
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        inputDate.value = chip.dataset.preset;
+        applyDate();
+      });
+    });
+
+    applyDate();
+  })();
+  </script>
+</body>
+</html>

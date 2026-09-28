@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d1b15"/>
+  <title>Greed Dice — Kais Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #07130e;
+      --felt: radial-gradient(circle at 50% 40%, #0d4633 0%, #082d21 60%, #041711 100%);
+      --felt-border: #6a4e23;
+      --felt-gold: #e2b96f;
+      --gold: #f2cb78;
+      --gold-dark: #8c672b;
+      --cream: #faf5e8;
+      --muted: #8ea89a;
+      --card-bg: rgba(3, 23, 17, 0.72);
+      --border: rgba(226, 185, 111, 0.22);
+      --red: #e64545;
+      --green: #4ade80;
+      --blue: #60a5fa;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--cream); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; }
+    body {
+      background: radial-gradient(circle at 50% -20%, rgba(226, 185, 111, 0.15), transparent 45%), linear-gradient(180deg, #071510, #030a07);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 24px);
+      border-bottom: 1px solid rgba(226, 185, 111, 0.12);
+      background: rgba(4, 18, 13, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(3, 24, 17, 0.5);
+      transition: .15s ease;
+    }
+    .back-btn:hover { background: rgba(226, 185, 111, 0.15); border-color: var(--gold); }
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(16px, 3vw, 22px);
+      letter-spacing: .12em;
+      color: var(--gold);
+      text-shadow: 0 0 16px rgba(242, 203, 120, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(3, 24, 17, 0.6);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(3, 24, 17, 0.6);
+      color: var(--gold);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      transition: .15s ease;
+    }
+    .sound-btn:hover { border-color: var(--gold); }
+
+    /* Main Container */
+    .app {
+      width: min(100%, 1100px);
+      margin: 0 auto;
+      padding: 16px clamp(10px, 2.5vw, 24px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Table Shell */
+    .table-shell {
+      position: relative;
+      border-radius: 36px;
+      padding: 14px;
+      background: linear-gradient(135deg, #4d3617 0%, #aa8443 25%, #6a4a1f 50%, #c49d52 75%, #463114 100%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    }
+    .felt-surface {
+      position: relative;
+      border-radius: 26px;
+      background: var(--felt);
+      padding: clamp(16px, 3vw, 28px);
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(226, 185, 111, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .felt-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 16px 16px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* Table Info Bar */
+    .table-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 185, 111, 0.35);
+      background: rgba(3, 24, 17, 0.7);
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .mode-pill .mode-desc {
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .pot-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 24px;
+      border-radius: 18px;
+      background: radial-gradient(circle, rgba(226, 185, 111, 0.18) 0%, rgba(3, 24, 17, 0.85) 85%);
+      border: 1px solid rgba(226, 185, 111, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .pot-label {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .pot-value {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 2px 10px rgba(242, 203, 120, 0.4);
+    }
+    .round-meta {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* Player Seats Grid */
+    .seats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .seat-card {
+      border: 1px solid rgba(226, 185, 111, 0.18);
+      border-radius: 18px;
+      background: rgba(3, 23, 17, 0.65);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: all .22s cubic-bezier(0.2, 0.8, 0.2, 1);
+      backdrop-filter: blur(8px);
+    }
+    .seat-card.active-turn {
+      border-color: var(--gold);
+      box-shadow: 0 0 25px rgba(226, 185, 111, 0.35), inset 0 0 15px rgba(226, 185, 111, 0.15);
+      transform: translateY(-3px);
+    }
+    .seat-card.folded {
+      opacity: 0.35;
+      filter: grayscale(0.8);
+      pointer-events: none;
+    }
+    .seat-card.winner {
+      border-color: var(--green);
+      box-shadow: 0 0 30px rgba(74, 222, 128, 0.4);
+      animation: pulseWin 1.2s ease infinite alternate;
+    }
+    @keyframes pulseWin {
+      from { transform: scale(1); }
+      to { transform: scale(1.03); }
+    }
+    .seat-card.is-you {
+      border-color: rgba(96, 165, 250, 0.4);
+      background: rgba(10, 30, 24, 0.75);
+    }
+
+    .seat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .player-identity {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      background: rgba(226, 185, 111, 0.1);
+      flex-shrink: 0;
+    }
+    .player-name {
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--cream);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .player-tag {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: .05em;
+    }
+    .seat-role-badge {
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .role-you { background: rgba(96, 165, 250, 0.2); color: var(--blue); }
+    .role-ai { background: rgba(226, 185, 111, 0.15); color: var(--gold); }
+
+    .seat-bankroll {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .bankroll-num {
+      font-weight: 900;
+      color: var(--cream);
+      font-size: 13px;
+    }
+    .seat-bet {
+      font-size: 10px;
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    /* Dice Display Area */
+    .seat-dice-tray {
+      min-height: 54px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px inset rgba(255, 255, 255, 0.05);
+    }
+    .dice-cube {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #faf6eb;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #d6c6a5;
+      display: grid;
+      place-items: center;
+      position: relative;
+      transition: transform .35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .dice-cube.rolling {
+      animation: diceRollAnim .6s ease-in-out infinite;
+    }
+    @keyframes diceRollAnim {
+      0% { transform: rotate(0deg) scale(0.9); }
+      50% { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(0.9); }
+    }
+    .dice-dots {
+      width: 100%;
+      height: 100%;
+      padding: 4px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      place-items: center;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #171717;
+      opacity: 0;
+    }
+    .dot.on { opacity: 1; }
+    .dot.red { background: #b91c1c; }
+
+    .seat-score {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--muted);
+      text-align: center;
+      min-height: 16px;
+    }
+    .seat-speech {
+      min-height: 28px;
+      font-size: 10px;
+      line-height: 1.25;
+      color: #bbf0d8;
+      background: rgba(13, 70, 51, 0.5);
+      border-radius: 8px;
+      padding: 4px 6px;
+      text-align: center;
+      display: grid;
+      place-items: center;
+      font-style: italic;
+    }
+
+    /* Central Arena / Status */
+    .arena-banner {
+      min-height: 50px;
+      border-radius: 16px;
+      background: rgba(3, 23, 17, 0.8);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .arena-status-text {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: .02em;
+    }
+    .arena-subtext {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Action Controls Dock */
+    .controls-dock {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+      margin-top: 4px;
+    }
+    .btn-action {
+      min-height: 52px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all .16s ease;
+      background: rgba(3, 24, 17, 0.85);
+      color: var(--cream);
+    }
+    .btn-action:hover:not(:disabled) {
+      transform: translateY(-2px);
+      border-color: var(--gold);
+    }
+    .btn-action:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    .btn-action:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .btn-action small {
+      font-size: 9px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .btn-match {
+      background: linear-gradient(180deg, #2d5a45, #183b2c);
+      border-color: rgba(74, 222, 128, 0.4);
+      color: #bbf7d0;
+    }
+    .btn-raise {
+      background: linear-gradient(180deg, #d4a34b, #966f28);
+      border-color: var(--gold);
+      color: #17130a;
+      box-shadow: 0 4px 18px rgba(212, 163, 75, 0.25);
+    }
+    .btn-fold {
+      background: linear-gradient(180deg, #442020, #2b1212);
+      border-color: rgba(230, 69, 69, 0.3);
+      color: #fca5a5;
+    }
+    .btn-roll {
+      background: linear-gradient(180deg, #e2b96f, #a98035);
+      color: #151008;
+      border: 0;
+      font-size: 15px;
+      font-weight: 1000;
+      letter-spacing: .06em;
+      box-shadow: 0 6px 20px rgba(226, 185, 111, 0.35);
+    }
+
+    /* Side Betting & Loan Shark Bar */
+    .table-footer-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 11px;
+    }
+    .tool-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(3, 24, 17, 0.6);
+      color: var(--muted);
+      font-weight: 800;
+      transition: .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tool-btn:hover { color: var(--gold); border-color: var(--gold); }
+    .loan-shark-btn {
+      border-color: rgba(230, 69, 69, 0.4);
+      color: #fca5a5;
+    }
+    .loan-shark-btn:hover { background: rgba(230, 69, 69, 0.15); border-color: var(--red); }
+
+    /* Modal (Loan Shark & Stats) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      width: min(100%, 460px);
+      border-radius: 24px;
+      border: 1px solid var(--gold);
+      background: linear-gradient(160deg, #0e271f, #05140f);
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: scale(0.95);
+      transition: transform .2s ease;
+    }
+    .modal-backdrop.open .modal-card {
+      transform: scale(1);
+    }
+    .modal-title {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-body {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #c7ded2;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      transition: .15s ease;
+    }
+    .modal-btn-primary {
+      background: var(--gold);
+      color: #161209;
+      border-color: var(--gold);
+    }
+    .modal-btn-cancel {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+    }
+
+    /* Stats Ribbon */
+    .stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .stat-box {
+      border: 1px solid rgba(226, 185, 111, 0.15);
+      background: rgba(3, 24, 17, 0.45);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 18px;
+      font-weight: 950;
+      color: var(--gold);
+    }
+    .stat-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-top: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .seats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .controls-dock {
+        grid-template-columns: 1fr 1fr;
+      }
+      .stats-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 480px) {
+      .app { padding: 10px 8px 30px; }
+      .felt-surface { padding: 14px 10px; }
+      .pot-value { font-size: 24px; }
+      .dice-cube { width: 32px; height: 32px; }
+      .btn-action { min-height: 48px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../" class="back-btn">← Kais Arcade</a>
+    <div class="brand-title">🎲 GREED DICE</div>
+    <div class="top-right">
+      <div class="hud-badge"><span id="arcadeCoinsBadge">🪙 0</span></div>
+      <button class="sound-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- Table Shell -->
+    <div class="table-shell">
+      <div class="felt-surface">
+
+        <!-- Table Info Bar -->
+        <div class="table-info">
+          <div class="mode-pill" id="modeBadge">
+            <span id="modeName">High Roll</span>
+            <span class="mode-desc" id="modeDesc">— Highest total takes the pot</span>
+          </div>
+
+          <div class="pot-display">
+            <span class="pot-label">Total Pot</span>
+            <span class="pot-value" id="potText">$0</span>
+          </div>
+
+          <div class="round-meta">
+            Round <span id="roundNum">1</span> · Min Bet: <span id="minBetText">$1,000</span>
+          </div>
+        </div>
+
+        <!-- 4 Player Seats -->
+        <div class="seats-grid" id="seatsGrid">
+
+          <!-- Seat 0: You -->
+          <div class="seat-card is-you" id="seat-0">
+            <div class="seat-header">
+              <div class="player-identity">
+                <div class="avatar-circle">😎</div>
+                <div>
+                  <div class="player-name">You (High Roller)</div>
+                  <div class="player-tag">Human Protagonist</div>
+                </div>
+              </div>
+              <span class="seat-role-badge role-you">YOU</span>
+            </div>
+            <div class="seat-bankroll">
+              <span>Stack:</span>
+              <span class="bankroll-num" id="bankroll-0">$100,000</span>
+            </div>
+            <div class="seat-bet" id="bet-0">Bet: $0</div>
+            <div class="seat-dice-tray" id="tray-0">
+              <div class="dice-cube" id="d-0-0"><div class="dice-dots" data-val="1"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on red"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>
+              <div class="dice-cube" id="d-0-1"><div class="dice-dots" data-val="1"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on red"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>
+            </div>
+            <div class="seat-score" id="score-0">Score: —</div>
+            <div class="seat-speech" id="speech-0">"Feeling lucky tonight."</div>
+          </div>
+
+          <!-- Seat 1: Maya "The Shark" -->
+          <div class="seat-card" id="seat-1">
+            <div class="seat-header">
+              <div class="player-identity">
+                <div class="avatar-circle">🦈</div>
+                <div>
+                  <div class="player-name">Maya "The Shark"</div>
+                  <div class="player-tag">Aggressive Bluffer</div>
+                </div>
+              </div>
+              <span class="seat-role-badge role-ai">AI</span>
+            </div>
+            <div class="seat-bankroll">
+              <span>Stack:</span>
+              <span class="bankroll-num" id="bankroll-1">$100,000</span>
+            </div>
+            <div class="seat-bet" id="bet-1">Bet: $0</div>
+            <div class="seat-dice-tray" id="tray-1">
+              <div class="dice-cube" id="d-1-0"><div class="dice-dots" data-val="6"><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span></div></div>
+              <div class="dice-cube" id="d-1-1"><div class="dice-dots" data-val="6"><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span></div></div>
+            </div>
+            <div class="seat-score" id="score-1">Score: —</div>
+            <div class="seat-speech" id="speech-1">"Fold now or get eaten."</div>
+          </div>
+
+          <!-- Seat 2: Leo "Safe Bet" -->
+          <div class="seat-card" id="seat-2">
+            <div class="seat-header">
+              <div class="player-identity">
+                <div class="avatar-circle">🦉</div>
+                <div>
+                  <div class="player-name">Leo "Calculated"</div>
+                  <div class="player-tag">Conservative Math</div>
+                </div>
+              </div>
+              <span class="seat-role-badge role-ai">AI</span>
+            </div>
+            <div class="seat-bankroll">
+              <span>Stack:</span>
+              <span class="bankroll-num" id="bankroll-2">$100,000</span>
+            </div>
+            <div class="seat-bet" id="bet-2">Bet: $0</div>
+            <div class="seat-dice-tray" id="tray-2">
+              <div class="dice-cube" id="d-2-0"><div class="dice-dots" data-val="4"><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span></div></div>
+              <div class="dice-cube" id="d-2-1"><div class="dice-dots" data-val="3"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div></div>
+            </div>
+            <div class="seat-score" id="score-2">Score: —</div>
+            <div class="seat-speech" id="speech-2">"The probability favors me."</div>
+          </div>
+
+          <!-- Seat 3: Nova "Chaos" -->
+          <div class="seat-card" id="seat-3">
+            <div class="seat-header">
+              <div class="player-identity">
+                <div class="avatar-circle">⚡</div>
+                <div>
+                  <div class="player-name">Nova "Chaos"</div>
+                  <div class="player-tag">Unhinged Maniac</div>
+                </div>
+              </div>
+              <span class="seat-role-badge role-ai">AI</span>
+            </div>
+            <div class="seat-bankroll">
+              <span>Stack:</span>
+              <span class="bankroll-num" id="bankroll-3">$100,000</span>
+            </div>
+            <div class="seat-bet" id="bet-3">Bet: $0</div>
+            <div class="seat-dice-tray" id="tray-3">
+              <div class="dice-cube" id="d-3-0"><div class="dice-dots" data-val="5"><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot on"></span></div></div>
+              <div class="dice-cube" id="d-3-1"><div class="dice-dots" data-val="2"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div></div>
+            </div>
+            <div class="seat-score" id="score-3">Score: —</div>
+            <div class="seat-speech" id="speech-3">"Money is just paper, bro!"</div>
+          </div>
+
+        </div>
+
+        <!-- Central Status Banner -->
+        <div class="arena-banner">
+          <div>
+            <div class="arena-status-text" id="arenaStatus">Starting next hand... Place your bet!</div>
+            <div class="arena-subtext" id="arenaSub">Current game mode: High Roll</div>
+          </div>
+          <button class="btn-action btn-roll" id="btnNextRound" style="display:none; min-height:42px; padding:0 20px;">
+            NEXT HAND ➔
+          </button>
+        </div>
+
+        <!-- Controls Dock -->
+        <div class="controls-dock" id="controlsDock">
+          <button class="btn-action btn-match" id="btnCall">
+            <span id="callLabel">MATCH ($1,000)</span>
+            <small>Stay in the hand</small>
+          </button>
+          <button class="btn-action btn-raise" id="btnRaise">
+            <span id="raiseLabel">RAISE (+$2,000)</span>
+            <small>Put pressure on table</small>
+          </button>
+          <button class="btn-action btn-fold" id="btnFold">
+            <span>PULL OUT (FOLD)</span>
+            <small>Cut your losses</small>
+          </button>
+          <button class="btn-action btn-roll" id="btnRollNow" disabled>
+            <span>ROLL DICE 🎲</span>
+            <small>Determine the winner</small>
+          </button>
+        </div>
+
+        <!-- Bottom Tools & Loan Shark Bar -->
+        <div class="table-footer-tools">
+          <div style="display:flex; gap:8px;">
+            <button class="tool-btn loan-shark-btn" id="loanSharkBtn">
+              🦈 Loan Shark Vinny
+            </button>
+            <button class="tool-btn" id="sideBetBtn">
+              🎯 Side Bet CPU ($1,000)
+            </button>
+          </div>
+          <div style="color:var(--muted); font-size:10px;">
+            *All currency is 100% fictional play money. No real money or gambling involved.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Stats Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stat-box">
+        <div class="stat-num" id="statRounds">0</div>
+        <div class="stat-label">Hands Played</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statWins">0</div>
+        <div class="stat-label">Hands Won</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statStreak">0</div>
+        <div class="stat-label">Win Streak 🔥</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statNetGain">+$0</div>
+        <div class="stat-label">Net Profit</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal: Loan Shark -->
+  <div class="modal-backdrop" id="loanModal">
+    <div class="modal-card">
+      <div class="modal-title">🦈 Loan Shark Vinny's Office</div>
+      <div class="modal-body">
+        <p><strong>"Hey kid... lost your shirt at the tables?"</strong></p>
+        <p style="margin-top:8px;">I can lend you <strong>$25,000</strong> right now into your stack. But don't play smart with me: 25% juice ($31,250) gets skimmed automatically from your future winnings.</p>
+        <p style="margin-top:8px; color:var(--gold);">Current Outstanding Debt: <span id="sharkDebt">$0</span></p>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-primary" id="takeLoanBtn">Take $25,000 Loan</button>
+        <button class="modal-btn modal-btn-cancel" id="closeLoanBtn">Never Mind</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    // ─── AUDIO ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = localStorage.getItem('ka_sound') !== 'off';
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.15) {
+      if (!soundOn || !actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain).connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e){}
+    }
+
+    const SFX = {
+      click() { playTone(900, 'sine', 0.05, 0.08); },
+      chip() {
+        playTone(1400, 'sine', 0.04, 0.12);
+        setTimeout(() => playTone(1800, 'sine', 0.05, 0.1), 35);
+      },
+      diceRattle() {
+        if (!soundOn || !actx) return;
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => playTone(400 + Math.random() * 800, 'triangle', 0.03, 0.07), i * 50);
+        }
+      },
+      win() {
+        [523, 659, 784, 1047, 1318].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.18, 0.12), i * 75);
+        });
+      },
+      bust() {
+        playTone(280, 'sawtooth', 0.25, 0.12);
+        setTimeout(() => playTone(210, 'sawtooth', 0.35, 0.15), 180);
+      },
+      raise() {
+        playTone(600, 'triangle', 0.08, 0.1);
+        setTimeout(() => playTone(880, 'triangle', 0.1, 0.12), 60);
+      }
+    };
+
+    const soundBtn = document.getElementById('soundBtn');
+    function updateSoundUI() {
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    }
+    updateSoundUI();
+    soundBtn.addEventListener('click', () => {
+      ensureAudio();
+      soundOn = !soundOn;
+      localStorage.setItem('ka_sound', soundOn ? 'on' : 'off');
+      updateSoundUI();
+      if (soundOn) SFX.click();
+    });
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() {
+      try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; }
+    }
+    function saveArcadeState(s) {
+      localStorage.setItem('ka_state', JSON.stringify(s));
+    }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp;
+      s.coins += coins;
+      s.plays += 1;
+      saveArcadeState(s);
+      updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id);
+        s.coins += 50;
+        s.xp += 30;
+        saveArcadeState(s);
+        updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      document.getElementById('arcadeCoinsBadge').textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
+
+    // ─── GAME STATE & MODES ───
+    const MODES = [
+      { id: 'high', name: 'High Roll', desc: 'Highest total wins the pot' },
+      { id: 'low', name: 'Low Roll', desc: 'Lowest total takes the pot' },
+      { id: 'doubles', name: 'Double Trouble', desc: 'Any double beats all non-doubles!' },
+      { id: 'lucky7', name: 'Lucky 7', desc: 'Closest sum to 7 takes the whole pot' },
+      { id: 'exact6', name: 'Exact 6', desc: 'Exactly 6 wins instantly, else high roll' },
+      { id: 'chaos', name: 'Chaos Shift', desc: 'Mode rules invert after the dice land!' }
+    ];
+
+    const PLAYERS = [
+      { id: 0, name: 'You', isAI: false, stack: 100000, bet: 0, folded: false, dice: [1, 1], score: 0 },
+      { id: 1, name: 'Maya', isAI: true, style: 'aggressive', stack: 100000, bet: 0, folded: false, dice: [1, 1], score: 0 },
+      { id: 2, name: 'Leo', isAI: true, style: 'conservative', stack: 100000, bet: 0, folded: false, dice: [1, 1], score: 0 },
+      { id: 3, name: 'Nova', isAI: true, style: 'chaos', stack: 100000, bet: 0, folded: false, dice: [1, 1], score: 0 }
+    ];
+
+    let currentMode = MODES[0];
+    let pot = 0;
+    let minBet = 1000;
+    let currentHighBet = 1000;
+    let roundNumber = 1;
+    let turnIndex = 0; // 0=You, 1=Maya, 2=Leo, 3=Nova
+    let bettingPhase = 'pre-roll'; // 'pre-roll', 'post-roll', 'showdown'
+    let loanDebt = 0;
+    let stats = { rounds: 0, wins: 0, streak: 0, startingStack: 100000 };
+
+    // Load saved bankroll if available
+    try {
+      const saved = JSON.parse(localStorage.getItem('greed_dice_state'));
+      if (saved) {
+        if (saved.stack) PLAYERS[0].stack = saved.stack;
+        if (saved.debt) loanDebt = saved.debt;
+        if (saved.stats) stats = saved.stats;
+      }
+    } catch(e){}
+
+    // Dice dot rendering matrix
+    const DOT_PATTERNS = {
+      1: [4],
+      2: [0, 8],
+      3: [0, 4, 8],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8]
+    };
+
+    function renderDice(diceCubeEl, val) {
+      const dotsContainer = diceCubeEl.querySelector('.dice-dots');
+      dotsContainer.dataset.val = val;
+      dotsContainer.innerHTML = '';
+      const onIndices = DOT_PATTERNS[val] || [4];
+      for (let i = 0; i < 9; i++) {
+        const span = document.createElement('span');
+        span.className = 'dot' + (onIndices.includes(i) ? ' on' : '') + (val === 1 && i === 4 ? ' red' : '');
+        dotsContainer.appendChild(span);
+      }
+    }
+
+    function updateUI() {
+      // Pot & Round
+      document.getElementById('potText').textContent = '$' + pot.toLocaleString();
+      document.getElementById('roundNum').textContent = roundNumber;
+      document.getElementById('minBetText').textContent = '$' + minBet.toLocaleString();
+      document.getElementById('modeName').textContent = currentMode.name;
+      document.getElementById('modeDesc').textContent = '— ' + currentMode.desc;
+
+      // Player Seats
+      PLAYERS.forEach((p, idx) => {
+        const seat = document.getElementById('seat-' + idx);
+        document.getElementById('bankroll-' + idx).textContent = '$' + Math.max(0, p.stack).toLocaleString();
+        document.getElementById('bet-' + idx).textContent = p.folded ? 'FOLDED' : ('Bet: $' + p.bet.toLocaleString());
+        seat.classList.toggle('folded', p.folded);
+        seat.classList.toggle('active-turn', turnIndex === idx && bettingPhase !== 'showdown');
+      });
+
+      // Controls
+      const isYourTurn = (turnIndex === 0) && (bettingPhase === 'pre-roll') && !PLAYERS[0].folded;
+      const toCall = currentHighBet - PLAYERS[0].bet;
+
+      const btnCall = document.getElementById('btnCall');
+      const btnRaise = document.getElementById('btnRaise');
+      const btnFold = document.getElementById('btnFold');
+      const btnRollNow = document.getElementById('btnRollNow');
+
+      btnCall.disabled = !isYourTurn || PLAYERS[0].stack < toCall;
+      document.getElementById('callLabel').textContent = toCall === 0 ? 'CHECK ($0)' : ('MATCH ($' + toCall.toLocaleString() + ')');
+
+      const raiseAmount = toCall + (minBet * 2);
+      btnRaise.disabled = !isYourTurn || PLAYERS[0].stack < raiseAmount;
+      document.getElementById('raiseLabel').textContent = 'RAISE (+$' + (minBet * 2).toLocaleString() + ')';
+
+      btnFold.disabled = !isYourTurn;
+      btnRollNow.disabled = bettingPhase !== 'ready-to-roll';
+
+      // Stats
+      document.getElementById('statRounds').textContent = stats.rounds;
+      document.getElementById('statWins').textContent = stats.wins;
+      document.getElementById('statStreak').textContent = stats.streak;
+      const profit = PLAYERS[0].stack - stats.startingStack;
+      document.getElementById('statNetGain').textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toLocaleString();
+      document.getElementById('statNetGain').style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+
+      // Save state
+      localStorage.setItem('greed_dice_state', JSON.stringify({
+        stack: PLAYERS[0].stack,
+        debt: loanDebt,
+        stats: stats
+      }));
+    }
+
+    // AI Taunts / Dialogue
+    const DIALOGUES = {
+      aggressive: {
+        raise: ["Raising the stakes! Anyone sweating?", "You can't afford this table.", "I smell weakness!"],
+        call: ["I'll see that bet.", "Easy money.", "Still in."],
+        fold: ["Tch, not worth my chips.", "Take the crumbs.", "You got lucky."],
+        win: ["Cleaned you out!", "Like taking candy from an infant.", "Who's the apex predator now?"]
+      },
+      conservative: {
+        raise: ["Variance is in my favor. Raising.", "Statistical advantage detected."],
+        call: ["Expected value is positive. Matching.", "Within calculated tolerance."],
+        fold: ["Risk profile unacceptable. Folding.", "Preserving bankroll."],
+        win: ["As predicted by probability theory.", "Math always triumphs."]
+      },
+      chaos: {
+        raise: ["YOLO! ALL GAS NO BRAKES!", "Double it! TRIPLE IT!", "Chaos reigns supreme!"],
+        call: ["Roll the bones baby!", "Let's ride this rollercoaster!"],
+        fold: ["Boring hand, going to grab a drink.", "Folding just to watch the world burn."],
+        win: ["BWHAHAHA! TOTAL ANARCHY WINS!", "Did anyone see that coming?!"]
+      }
+    };
+
+    function setSpeech(playerIdx, text) {
+      const el = document.getElementById('speech-' + playerIdx);
+      if (el) el.textContent = '"' + text + '"';
+    }
+
+    // ─── START HAND ───
+    function startNewHand() {
+      roundNumber++;
+      currentMode = MODES[Math.floor(Math.random() * MODES.length)];
+      pot = 0;
+      minBet = Math.min(5000, 1000 + Math.floor(roundNumber / 2) * 500);
+      currentHighBet = minBet;
+      bettingPhase = 'pre-roll';
+      turnIndex = 0;
+
+      document.querySelectorAll('.seat-card').forEach(s => s.classList.remove('winner'));
+      document.getElementById('btnNextRound').style.display = 'none';
+      document.getElementById('controlsDock').style.display = 'grid';
+
+      // Reset players & Collect Ante
+      PLAYERS.forEach((p, idx) => {
+        p.folded = p.stack < minBet;
+        p.bet = 0;
+        p.score = 0;
+        document.getElementById('score-' + idx).textContent = 'Score: —';
+        if (!p.folded) {
+          p.stack -= minBet;
+          p.bet = minBet;
+          pot += minBet;
+        } else if (idx === 0) {
+          // You are bankrupt
+          document.getElementById('arenaStatus').textContent = "You're busted! Visit Loan Shark Vinny for a stake!";
+        }
+      });
+
+      SFX.chip();
+      document.getElementById('arenaStatus').textContent = "Ante posted: $" + minBet.toLocaleString() + ". Mode: " + currentMode.name;
+      document.getElementById('arenaSub').textContent = "Make your move: Match, Raise, or Pull Out.";
+
+      setSpeech(0, "Game mode is " + currentMode.name + ". Let's do this.");
+      setSpeech(1, "Don't blink or your stack disappears.");
+      setSpeech(2, "Analyzing Mode: " + currentMode.name + ".");
+      setSpeech(3, "Roll the bones!");
+
+      updateUI();
+    }
+
+    // ─── PLAYER ACTION HANDLERS ───
+    document.getElementById('btnCall').addEventListener('click', () => {
+      ensureAudio();
+      const toCall = currentHighBet - PLAYERS[0].bet;
+      PLAYERS[0].stack -= toCall;
+      PLAYERS[0].bet += toCall;
+      pot += toCall;
+      SFX.chip();
+      setSpeech(0, toCall === 0 ? "Checking." : "Matching $" + toCall.toLocaleString() + ".");
+      advanceTurn();
+    });
+
+    document.getElementById('btnRaise').addEventListener('click', () => {
+      ensureAudio();
+      const toCall = currentHighBet - PLAYERS[0].bet;
+      const raiseAmt = minBet * 2;
+      const total = toCall + raiseAmt;
+      PLAYERS[0].stack -= total;
+      PLAYERS[0].bet += total;
+      pot += total;
+      currentHighBet = PLAYERS[0].bet;
+      SFX.raise();
+      setSpeech(0, "Raising to $" + currentHighBet.toLocaleString() + "!");
+      advanceTurn();
+    });
+
+    document.getElementById('btnFold').addEventListener('click', () => {
+      ensureAudio();
+      PLAYERS[0].folded = true;
+      SFX.click();
+      setSpeech(0, "I fold this hand.");
+      advanceTurn();
+    });
+
+    // ─── TURN & AI LOGIC ───
+    function advanceTurn() {
+      updateUI();
+      // Check if only one player remaining
+      const active = PLAYERS.filter(p => !p.folded);
+      if (active.length <= 1) {
+        showdown(active[0] || PLAYERS[0]);
+        return;
+      }
+
+      turnIndex++;
+      if (turnIndex >= PLAYERS.length) {
+        // Everyone has acted
+        bettingPhase = 'ready-to-roll';
+        document.getElementById('arenaStatus').textContent = "Bets placed! Hit ROLL DICE to roll.";
+        document.getElementById('btnRollNow').disabled = false;
+        updateUI();
+        return;
+      }
+
+      // Next AI turn
+      const cur = PLAYERS[turnIndex];
+      if (cur.folded) {
+        advanceTurn();
+        return;
+      }
+
+      updateUI();
+      document.getElementById('arenaStatus').textContent = cur.name + " is deciding...";
+      setTimeout(() => processAITurn(cur), 800);
+    }
+
+    function processAITurn(ai) {
+      const toCall = currentHighBet - ai.bet;
+      const style = ai.style;
+      const quotes = DIALOGUES[style];
+
+      if (ai.stack < toCall) {
+        // AI forced fold
+        ai.folded = true;
+        setSpeech(ai.id, quotes.fold[0]);
+      } else if (style === 'aggressive') {
+        const rnd = Math.random();
+        if (rnd > 0.45 && ai.stack >= toCall + minBet * 2) {
+          // Raise
+          const raise = toCall + minBet * 2;
+          ai.stack -= raise;
+          ai.bet += raise;
+          pot += raise;
+          currentHighBet = ai.bet;
+          SFX.raise();
+          setSpeech(ai.id, quotes.raise[Math.floor(Math.random() * quotes.raise.length)]);
+        } else if (rnd > 0.1) {
+          ai.stack -= toCall;
+          ai.bet += toCall;
+          pot += toCall;
+          SFX.chip();
+          setSpeech(ai.id, quotes.call[Math.floor(Math.random() * quotes.call.length)]);
+        } else {
+          ai.folded = true;
+          setSpeech(ai.id, quotes.fold[Math.floor(Math.random() * quotes.fold.length)]);
+        }
+      } else if (style === 'conservative') {
+        // Leo only raises on low stakes
+        if (toCall > minBet * 3) {
+          if (Math.random() > 0.5) {
+            ai.folded = true;
+            setSpeech(ai.id, quotes.fold[0]);
+          } else {
+            ai.stack -= toCall;
+            ai.bet += toCall;
+            pot += toCall;
+            SFX.chip();
+            setSpeech(ai.id, quotes.call[0]);
+          }
+        } else {
+          ai.stack -= toCall;
+          ai.bet += toCall;
+          pot += toCall;
+          SFX.chip();
+          setSpeech(ai.id, quotes.call[0]);
+        }
+      } else {
+        // Chaos Nova
+        const rnd = Math.random();
+        if (rnd > 0.5 && ai.stack >= toCall + minBet * 2) {
+          const raise = toCall + minBet * 2;
+          ai.stack -= raise;
+          ai.bet += raise;
+          pot += raise;
+          currentHighBet = ai.bet;
+          SFX.raise();
+          setSpeech(ai.id, quotes.raise[Math.floor(Math.random() * quotes.raise.length)]);
+        } else {
+          ai.stack -= toCall;
+          ai.bet += toCall;
+          pot += toCall;
+          SFX.chip();
+          setSpeech(ai.id, quotes.call[Math.floor(Math.random() * quotes.call.length)]);
+        }
+      }
+
+      advanceTurn();
+    }
+
+    // ─── ROLL DICE ───
+    document.getElementById('btnRollNow').addEventListener('click', () => {
+      ensureAudio();
+      document.getElementById('btnRollNow').disabled = true;
+      document.getElementById('arenaStatus').textContent = "Rolling dice across the felt...";
+      SFX.diceRattle();
+
+      // Trigger roll animation on all cubes
+      document.querySelectorAll('.dice-cube').forEach(cube => cube.classList.add('rolling'));
+
+      setTimeout(() => {
+        document.querySelectorAll('.dice-cube').forEach(cube => cube.classList.remove('rolling'));
+
+        // Generate values
+        PLAYERS.forEach((p, idx) => {
+          if (!p.folded) {
+            p.dice = [
+              Math.floor(Math.random() * 6) + 1,
+              Math.floor(Math.random() * 6) + 1
+            ];
+            renderDice(document.getElementById('d-' + idx + '-0'), p.dice[0]);
+            renderDice(document.getElementById('d-' + idx + '-1'), p.dice[1]);
+
+            // Calculate score based on mode
+            p.score = calculateScore(p.dice, currentMode.id);
+            document.getElementById('score-' + idx).textContent = 'Score: ' + p.score + ' (' + p.dice[0] + '+' + p.dice[1] + ')';
+          }
+        });
+
+        evaluateWinner();
+      }, 900);
+    });
+
+    function calculateScore(dice, modeId) {
+      const sum = dice[0] + dice[1];
+      const isDoubles = dice[0] === dice[1];
+      if (modeId === 'high') return sum;
+      if (modeId === 'low') return 100 - sum; // higher is better for ranking
+      if (modeId === 'doubles') return isDoubles ? (100 + sum) : sum;
+      if (modeId === 'lucky7') return 100 - Math.abs(7 - sum);
+      if (modeId === 'exact6') return sum === 6 ? 999 : sum;
+      if (modeId === 'chaos') {
+        // random invert!
+        return Math.random() > 0.5 ? sum : (100 - sum);
+      }
+      return sum;
+    }
+
+    function evaluateWinner() {
+      const contenders = PLAYERS.filter(p => !p.folded);
+      if (!contenders.length) return;
+
+      contenders.sort((a, b) => b.score - a.score);
+      const winner = contenders[0];
+      showdown(winner);
+    }
+
+    function showdown(winner) {
+      bettingPhase = 'showdown';
+      winner.stack += pot;
+      document.getElementById('seat-' + winner.id).classList.add('winner');
+
+      stats.rounds++;
+
+      if (winner.id === 0) {
+        // You won!
+        stats.wins++;
+        stats.streak++;
+        SFX.win();
+        document.getElementById('arenaStatus').textContent = "🎉 YOU WON THE POT OF $" + pot.toLocaleString() + "!";
+        setSpeech(0, "Read 'em and weep! My pot!");
+
+        // Handle loan shark payback if any
+        if (loanDebt > 0) {
+          const cut = Math.min(loanDebt, Math.floor(pot * 0.3));
+          loanDebt -= cut;
+          winner.stack -= cut;
+          document.getElementById('arenaSub').textContent = "Loan Shark Vinny skimmed $" + cut.toLocaleString() + " for repayment!";
+        } else {
+          document.getElementById('arenaSub').textContent = "Pure profit added to your bankroll.";
+        }
+
+        // Award Arcade progression
+        awardArcadeXP(35, Math.floor(pot / 1000));
+        unlockArcadeAchievement('greed_first_win', '🎲 High Roller — Won a hand of Greed Dice!');
+        if (stats.streak >= 3) {
+          unlockArcadeAchievement('greed_streak_3', '🔥 Hot Hand — 3 win streak in Greed Dice!');
+        }
+        if (winner.stack >= 200000) {
+          unlockArcadeAchievement('greed_200k', '💰 Greed Incarnate — Stack exceeded $200,000!');
+        }
+      } else {
+        // AI won
+        stats.streak = 0;
+        SFX.bust();
+        document.getElementById('arenaStatus').textContent = winner.name + " won the pot of $" + pot.toLocaleString() + "!";
+        const style = winner.style;
+        setSpeech(winner.id, DIALOGUES[style].win[Math.floor(Math.random() * DIALOGUES[style].win.length)]);
+        awardArcadeXP(10, 5); // Consolation XP
+      }
+
+      pot = 0;
+      updateUI();
+
+      // Show Next Hand button
+      document.getElementById('btnNextRound').style.display = 'block';
+    }
+
+    document.getElementById('btnNextRound').addEventListener('click', () => {
+      ensureAudio();
+      startNewHand();
+    });
+
+    // ─── LOAN SHARK MODAL ───
+    const loanModal = document.getElementById('loanModal');
+    document.getElementById('loanSharkBtn').addEventListener('click', () => {
+      ensureAudio();
+      document.getElementById('sharkDebt').textContent = '$' + loanDebt.toLocaleString();
+      loanModal.classList.add('open');
+    });
+    document.getElementById('closeLoanBtn').addEventListener('click', () => {
+      loanModal.classList.remove('open');
+    });
+    document.getElementById('takeLoanBtn').addEventListener('click', () => {
+      ensureAudio();
+      const loan = 25000;
+      const juice = 31250;
+      PLAYERS[0].stack += loan;
+      loanDebt += juice;
+      SFX.raise();
+      loanModal.classList.remove('open');
+      setSpeech(0, "Took out $25K from Vinny... I better win this back.");
+      updateUI();
+    });
+
+    // ─── SIDE BETTING ───
+    document.getElementById('sideBetBtn').addEventListener('click', () => {
+      ensureAudio();
+      if (PLAYERS[0].stack < 1000) {
+        alert("Not enough funds for side bet!");
+        return;
+      }
+      PLAYERS[0].stack -= 1000;
+      const pick = ['Maya', 'Leo', 'Nova'][Math.floor(Math.random() * 3)];
+      SFX.chip();
+      alert("Placed $1,000 side bet on " + pick + " to win this round! 3x payout if they take the pot.");
+      updateUI();
+    });
+
+    // Initialize initial hand
+    startNewHand();
+  })();
+  </script>
+</body>
+</html>

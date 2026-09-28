@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="description" content="A collection of completely unnecessary browser games and experiments made with an irresponsible amount of effort." />
+  <title>Kais Arcade — Tiny games. Huge drama.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0b0b0d;
+      --panel:#141417;
+      --card:#1a1a1f;
+      --text:#f5f3ee;
+      --muted:#9e9aa3;
+      --border:#2a2930;
+      --accent:#b9ff66;
+      --accent-ink:#11130e;
+      --accent-glow:rgba(185,255,102,.12);
+      --red:#ff5c66;
+      --blue:#65a8ff;
+      --gold:#ffcf66;
+      --purple:#b38aff;
+      --radius:28px;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{background:var(--bg);color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);min-width:320px;overflow-x:hidden}
+    button,input{font:inherit}
+    button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+    a{color:inherit;text-decoration:none}
+
+    .ambient{position:fixed;inset:-30%;pointer-events:none;z-index:0;
+      background:radial-gradient(circle at 30% 20%,rgba(185,255,102,.06),transparent 30%),
+        radial-gradient(circle at 70% 80%,rgba(101,168,255,.04),transparent 25%);
+      filter:blur(20px)}
+
+    .wrap{position:relative;z-index:1;width:min(100%,820px);margin:0 auto;padding:14px 16px 48px}
+
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .brand{font-weight:900;letter-spacing:-.03em;font-size:18px}
+    .brand small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0;margin-top:2px}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .sound-toggle{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--card);display:grid;place-items:center;font-size:18px;transition:.18s ease;color:var(--muted)}
+    .sound-toggle:hover{border-color:#47444f;color:var(--text)}
+    .sound-toggle.on{color:var(--accent);border-color:rgba(185,255,102,.3)}
+
+    .hud{margin:14px 0;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid var(--border);background:var(--panel);border-radius:20px;padding:12px 14px}
+    .hud-left{display:flex;align-items:center;gap:12px}
+    .hud-avatar{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#6aff9e);display:grid;place-items:center;font-size:18px;font-weight:900;color:var(--accent-ink);flex-shrink:0}
+    .hud-info{min-width:0}
+    .hud-level{font-size:10px;color:var(--gold);font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .hud-xp-wrap{margin-top:4px;display:flex;align-items:center;gap:8px}
+    .xp-bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;min-width:80px}
+    .xp-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#6aff9e);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+    .xp-text{font-size:10px;color:var(--muted);font-weight:800;white-space:nowrap}
+    .hud-coins{display:flex;align-items:center;gap:6px;border:1px solid rgba(255,207,102,.25);background:rgba(255,207,102,.06);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:900;color:var(--gold);white-space:nowrap}
+    .coin-icon{font-size:16px}
+
+    .streak-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:10px 14px;margin-bottom:14px}
+    .streak-left{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}
+    .streak-fire{font-size:18px}
+    .streak-days{color:var(--gold)}
+    .daily-btn{min-height:36px;padding:0 14px;border-radius:12px;border:1px solid rgba(185,255,102,.3);background:rgba(185,255,102,.08);color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;transition:.18s ease}
+    .daily-btn:hover{background:rgba(185,255,102,.15)}
+    .daily-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    .ticker{margin:0 -16px 20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;white-space:nowrap}
+    .ticker-track{display:inline-flex;gap:34px;min-width:max-content;padding:10px 0;animation:ticker 22s linear infinite;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+    @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    .hero-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:800;margin:0 0 10px}
+    h1{font-size:clamp(2.8rem,13vw,5.5rem);line-height:.88;letter-spacing:-.065em;font-weight:950}
+    .accent{color:var(--accent)}
+    .hero-copy{font-size:15px;line-height:1.55;color:var(--muted);max-width:560px;margin:18px 0 0}
+
+    .filters{display:flex;gap:8px;overflow-x:auto;padding:6px 0 4px;margin:24px 0 18px;scrollbar-width:none}
+    .filters::-webkit-scrollbar{display:none}
+    .filter{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:13px;font-weight:800;white-space:nowrap;transition:.18s ease}
+    .filter:hover{border-color:#47444f}
+    .filter.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+    .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .section-head h3{font-size:26px;letter-spacing:-.04em}
+    .eyebrow{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+    .random{min-height:42px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:14px;padding:0 14px;font-weight:850;transition:.18s ease}
+    .random:hover{border-color:#47444f;transform:translateY(-1px)}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .card{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);overflow:hidden;position:relative;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+    .card:hover{transform:translateY(-3px);border-color:#47444f;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+    .card:active{transform:scale(.99)}
+    .card.hidden{display:none}
+
+    .card-link{display:flex;flex-direction:column;min-height:224px;padding:18px;color:var(--text);text-decoration:none}
+    .card-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:800}
+    .card-tag{padding:4px 8px;border-radius:8px;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+    .tag-live{background:rgba(98,230,167,.12);color:#62e6a7}
+    .tag-new{background:rgba(185,255,102,.12);color:var(--accent)}
+    .tag-api{background:rgba(101,168,255,.12);color:var(--blue)}
+    .tag-legacy{background:rgba(255,92,102,.1);color:var(--red)}
+
+    .visual{flex:1;display:grid;place-items:center;padding:18px 0}
+    .visual.big{font-size:48px;font-weight:950;letter-spacing:-.07em}
+    .visual.small{font-size:30px;font-weight:950}
+    .card h4{margin:0;font-size:20px;letter-spacing:-.03em}
+    .card p{margin:5px 0 0;font-size:13px;color:var(--muted);line-height:1.4}
+    .card-xp{margin-top:10px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--accent);letter-spacing:.06em}
+
+    .featured{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);overflow:hidden;padding:20px;margin-bottom:20px;position:relative;transition:transform .18s ease,border-color .18s ease}
+    .featured:hover{transform:translateY(-3px);border-color:#47444f}
+    .featured-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .featured h2{font-size:32px;line-height:1;letter-spacing:-.045em;margin:6px 0 0}
+    .dice-icon{width:58px;height:58px;border:1px solid var(--border);background:var(--card);display:grid;place-items:center;border-radius:18px;font-size:28px;animation:float 2.6s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-7px) rotate(6deg)}}
+
+    .odds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+    .odd{border:1px solid var(--border);background:var(--card);padding:13px;border-radius:17px;min-width:0}
+    .odd span{display:block;font-size:11px;color:var(--muted)}
+    .odd strong{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .odd b{display:block;margin-top:12px;font-size:22px;color:var(--gold)}
+
+    .featured-foot{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:16px}
+    .featured-foot p{color:var(--muted);font-size:14px}
+    .play-link{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:900;font-size:14px;text-decoration:none;transition:.18s ease}
+    .play-link:hover{filter:brightness(.92);transform:translateY(-1px)}
+
+    .toast-container{position:fixed;top:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast{pointer-events:auto;padding:14px 18px;border-radius:16px;background:rgba(20,20,23,.92);border:1px solid var(--border);backdrop-filter:blur(16px);font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;animation:toastIn .35s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 12px 40px rgba(0,0,0,.4);max-width:340px}
+    .toast.out{animation:toastOut .3s ease forwards}
+    .toast-icon{font-size:22px;flex-shrink:0}
+    @keyframes toastIn{from{opacity:0;transform:translateX(30px) scale(.92)}to{opacity:1;transform:none}}
+    @keyframes toastOut{to{opacity:0;transform:translateX(30px) scale(.92)}}
+
+    #particles{position:fixed;inset:0;pointer-events:none;z-index:99}
+
+    footer{text-align:center;padding:48px 0 10px}
+    footer .emoji{font-size:36px}
+    footer strong{display:block;margin-top:10px}
+    footer p{color:var(--muted);font-size:14px;margin:4px 0 0}
+    footer .stats{margin-top:14px;display:flex;justify-content:center;gap:18px;font-size:11px;color:var(--muted);font-weight:700;flex-wrap:wrap}
+    footer .stats span{color:var(--text)}
+
+    @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}.featured{padding:26px}}
+    @media(max-width:420px){.hud{grid-template-columns:1fr;gap:8px}.hud-coins{justify-self:start}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <canvas id="particles"></canvas>
+  <div class="toast-container" id="toasts"></div>
+
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">KAIS ARCADE<small>software nobody asked for</small></div>
+      <div class="topbar-right">
+        <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound" title="Toggle sound">🔇</button>
+      </div>
+    </header>
+
+    <div class="hud">
+      <div class="hud-left">
+        <div class="hud-avatar" id="avatar">K</div>
+        <div class="hud-info">
+          <div class="hud-level" id="levelLabel">LEVEL 1 · CASUAL GUEST</div>
+          <div class="hud-xp-wrap">
+            <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+            <div class="xp-text" id="xpText">0 / 100 XP</div>
+          </div>
+        </div>
+      </div>
+      <div class="hud-coins"><span class="coin-icon">🪙</span><span id="coinCount">0</span></div>
+    </div>
+
+    <div class="streak-bar">
+      <div class="streak-left">
+        <span class="streak-fire">🔥</span>
+        <span>Daily Streak: <span class="streak-days" id="streakDays">0</span></span>
+      </div>
+      <button class="daily-btn" id="dailyBtn">Claim Daily +50 🪙</button>
+    </div>
+
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>100% frontend</span><span>zero useful features</span><span>way too much polish</span>
+        <span>bad ideas shipped</span><span>no login required</span><span>localStorage only</span>
+        <span>100% frontend</span><span>zero useful features</span><span>way too much polish</span>
+        <span>bad ideas shipped</span><span>no login required</span><span>localStorage only</span>
+      </div>
+    </div>
+
+    <main>
+      <p class="hero-kicker">Welcome player</p>
+      <h1>Tiny games.<br><span class="accent">Huge drama.</span></h1>
+      <p class="hero-copy">A collection of completely unnecessary browser games and experiments made with an irresponsible amount of effort.</p>
+
+      <div class="filters">
+        <button class="filter active" data-filter="all">All games</button>
+        <button class="filter" data-filter="casino">Casino</button>
+        <button class="filter" data-filter="pvp">PvP</button>
+        <button class="filter" data-filter="chaos">Chaos</button>
+        <button class="filter" data-filter="tool">Tools</button>
+      </div>
+
+      <section class="featured" data-category="casino">
+        <div class="featured-head">
+          <div><div class="eyebrow">Featured game</div><h2>Decision Casino</h2></div>
+          <div class="dice-icon">🎲</div>
+        </div>
+        <div class="odds">
+          <div class="odd"><span>OPTION A</span><strong>Go to class</strong><b>2.4×</b></div>
+          <div class="odd"><span>OPTION B</span><strong>Stay home</strong><b>1.3×</b></div>
+        </div>
+        <div class="featured-foot">
+          <p>Outsource your future irresponsibly.</p>
+          <a class="play-link" href="./decision-casino/" data-game="decision-casino">PLAY ➔</a>
+        </div>
+      </section>
+
+      <div class="section-head">
+        <div><div class="eyebrow">Game library</div><h3>Pick your poison.</h3></div>
+        <button class="random" id="randomGame">🎲 Random</button>
+      </div>
+
+      <section class="grid" id="gameGrid">
+        <article class="card" data-category="casino">
+          <a class="card-link" href="./greed-dice/" data-game="greed-dice">
+            <div class="card-top"><span>001</span><span class="card-tag tag-live">ENHANCED</span></div>
+            <div class="visual big" style="color:var(--gold)">🎲💰</div>
+            <h4>Greed Dice</h4>
+            <p>4-player dice gambling. 6 modes. Loan Shark Vinny. Persistent bankroll.</p>
+            <div class="card-xp">+25 XP per round</div>
+          </a>
+        </article>
+
+        <article class="card" data-category="pvp">
+          <a class="card-link" href="./rps-pay-to-win/" data-game="rps-pay-to-win">
+            <div class="card-top"><span>002</span><span class="card-tag tag-live">ENHANCED</span></div>
+            <div class="visual big" style="font-size:36px">✊ ✋ ✌️</div>
+            <h4>Rock Paper Scissors</h4>
+            <p>Lose fairly. Win financially. Escalating $99-$1,999 corporate integrity.</p>
+            <div class="card-xp">+15 XP per match</div>
+          </a>
+        </article>
+
+        <article class="card" data-category="chaos tool">
+          <a class="card-link" href="./text-my-ex/" data-game="text-my-ex">
+            <div class="card-top"><span>003</span><span class="card-tag tag-new">NEW GAME</span></div>
+            <div class="visual small" style="color:var(--red)">● MyFitnessEx</div>
+            <h4>MyFitnessEx</h4>
+            <p>Satirical calorie survival simulator. Go over 1,800 kcal and it texts your ex.</p>
+            <div class="card-xp">+10 XP per log</div>
+          </a>
+        </article>
+
+        <article class="card" data-category="chaos">
+          <a class="card-link" href="./the-button/" data-game="the-button">
+            <div class="card-top"><span>004</span><span class="card-tag tag-live">REBUILT</span></div>
+            <div class="visual"><span style="padding:13px 20px;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-weight:900">click me</span></div>
+            <h4>The Button</h4>
+            <p>One button. Multipliers, golden glitches, and apocalypse protocol.</p>
+            <div class="card-xp">+5 XP per click</div>
+          </a>
+        </article>
+
+        <article class="card" data-category="tool">
+          <a class="card-link" href="./ai-answers/" data-game="ai-answers">
+            <div class="card-top"><span>005</span><span class="card-tag tag-live">REBUILT</span></div>
+            <div class="visual big" style="font-size:36px">🤖💬</div>
+            <h4>AI Oracle 3000</h4>
+            <p>Sarcastic superintelligence terminal. Roasts your questions with math.</p>
+            <div class="card-xp">+20 XP per consult</div>
+          </a>
+        </article>
+
+        <article class="card" data-category="tool chaos">
+          <a class="card-link" href="./age-calc/" data-game="age-calc">
+            <div class="card-top"><span>006</span><span class="card-tag tag-live">NEW UI</span></div>
+            <div class="visual small" id="ageTicker">674,956,800</div>
+            <h4>Existential Life Clock</h4>
+            <p>Cosmic telemetry, live millisecond ticker, and historical peer dread.</p>
+            <div class="card-xp">+15 XP per crisis</div>
+          </a>
+        </article>
+      </section>
+
+      <footer>
+        <div class="emoji">🕹️</div>
+        <strong>You reached the end.</strong>
+        <p>Achievement unlocked: wasted time successfully.</p>
+        <div class="stats">
+          Games played: <span id="totalPlays">0</span> ·
+          Total XP: <span id="totalXp">0</span> ·
+          Coins: <span id="totalCoins">0</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+  (() => {
+    // ─── WEB AUDIO SFX ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = false;
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.15) {
+      if (!soundOn || !actx) return;
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, actx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+      osc.connect(gain).connect(actx.destination);
+      osc.start(); osc.stop(actx.currentTime + dur);
+    }
+
+    const SFX = {
+      click() { playTone(800, 'sine', 0.06, 0.1); },
+      coin() { playTone(1200, 'sine', 0.08, 0.12); setTimeout(() => playTone(1600, 'sine', 0.1, 0.1), 60); },
+      levelUp() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.18, 0.12), i * 80)); },
+      achievement() { playTone(880, 'square', 0.06, 0.08); setTimeout(() => playTone(1100, 'square', 0.06, 0.08), 70); setTimeout(() => playTone(1320, 'sine', 0.2, 0.1), 140); },
+      daily() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.15, 0.1), i * 100)); },
+    };
+
+    // ─── SOUND TOGGLE ───
+    const soundToggle = document.getElementById('soundToggle');
+    soundOn = localStorage.getItem('ka_sound') !== 'off';
+    function updateSoundUI() { soundToggle.textContent = soundOn ? '🔊' : '🔇'; soundToggle.classList.toggle('on', soundOn); }
+    updateSoundUI();
+    soundToggle.addEventListener('click', () => { ensureAudio(); soundOn = !soundOn; localStorage.setItem('ka_sound', soundOn ? 'on' : 'off'); updateSoundUI(); if (soundOn) SFX.click(); });
+
+    // ─── PROGRESSION ───
+    const LEVELS = [
+      { name: 'Casual Guest', xp: 0 }, { name: 'Button Masher', xp: 100 }, { name: 'Dice Roller', xp: 300 },
+      { name: 'Risk Taker', xp: 600 }, { name: 'Drama Queen', xp: 1000 }, { name: 'Arcade Regular', xp: 1600 },
+      { name: 'High Roller', xp: 2500 }, { name: 'Degen Lord', xp: 4000 }, { name: 'Keyboard Destroyer', xp: 6000 },
+      { name: 'Arcade Overlord', xp: 10000 },
+    ];
+
+    function loadState() { try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; } }
+    function saveState(s) { localStorage.setItem('ka_state', JSON.stringify(s)); }
+
+    let state = { xp: 0, coins: 0, level: 1, plays: 0, streak: 0, lastDaily: null, lastVisit: null, achievements: [], ...loadState() };
+
+    function getLevelInfo(xp) {
+      let lvl = 1;
+      for (let i = LEVELS.length - 1; i >= 0; i--) { if (xp >= LEVELS[i].xp) { lvl = i + 1; break; } }
+      const cur = LEVELS[lvl - 1], nxt = LEVELS[lvl] || { xp: cur.xp + 5000 };
+      return { lvl, name: cur.name, progress: Math.min(1, Math.max(0, (xp - cur.xp) / (nxt.xp - cur.xp))), nextXp: nxt.xp };
+    }
+
+    function render() {
+      const info = getLevelInfo(state.xp); state.level = info.lvl;
+      document.getElementById('levelLabel').textContent = 'LEVEL ' + info.lvl + ' \u00b7 ' + info.name.toUpperCase();
+      document.getElementById('xpFill').style.width = (info.progress * 100).toFixed(1) + '%';
+      document.getElementById('xpText').textContent = state.xp + ' / ' + info.nextXp + ' XP';
+      document.getElementById('coinCount').textContent = state.coins.toLocaleString();
+      document.getElementById('streakDays').textContent = state.streak;
+      document.getElementById('totalPlays').textContent = state.plays;
+      document.getElementById('totalXp').textContent = state.xp;
+      document.getElementById('totalCoins').textContent = state.coins;
+      const icons = ['K','K','\u{1F3B2}','\u{1F3AF}','\u{1F451}','\u{1F525}','\u{1F48E}','\u{1F3C6}','\u26A1','\u{1F31F}'];
+      document.getElementById('avatar').textContent = icons[Math.min(info.lvl - 1, icons.length - 1)];
+      saveState(state);
+    }
+
+    function addXP(amount) {
+      const oldLvl = getLevelInfo(state.xp).lvl;
+      state.xp += amount;
+      const newLvl = getLevelInfo(state.xp).lvl;
+      if (newLvl > oldLvl) { SFX.levelUp(); showToast('\u{1F389}', 'Level ' + newLvl + '! ' + LEVELS[newLvl - 1].name); }
+      render();
+    }
+
+    function addCoins(n) { state.coins += n; SFX.coin(); render(); }
+
+    // ─── DAILY & STREAKS ───
+    const dailyBtn = document.getElementById('dailyBtn');
+    function todayStr() { return new Date().toISOString().slice(0, 10); }
+    function checkStreak() {
+      const today = todayStr();
+      if (state.lastVisit) { const diff = Math.floor((new Date(today) - new Date(state.lastVisit)) / 86400000); if (diff > 1) state.streak = 0; }
+      state.lastVisit = today; saveState(state);
+    }
+    function canClaim() { return state.lastDaily !== todayStr(); }
+    function updateDaily() { dailyBtn.disabled = !canClaim(); dailyBtn.textContent = canClaim() ? 'Claim Daily +50 \u{1FA99}' : '\u2713 Claimed today'; }
+
+    dailyBtn.addEventListener('click', () => {
+      ensureAudio(); if (!canClaim()) return;
+      state.lastDaily = todayStr(); state.streak += 1;
+      const bonus = Math.min(state.streak * 10, 100), total = 50 + bonus;
+      addCoins(total); addXP(20); SFX.daily();
+      showToast('\u{1F381}', '+' + total + ' coins! Streak: ' + state.streak + ' days');
+      if (state.streak >= 7 && !state.achievements.includes('streak_7')) unlock('streak_7', '\u{1F525} Week Warrior \u2014 7-day streak!');
+      updateDaily(); render();
+    });
+
+    // ─── ACHIEVEMENTS ───
+    function unlock(id, text) {
+      if (state.achievements.includes(id)) return;
+      state.achievements.push(id); SFX.achievement(); showToast('\u{1F3C6}', text); addCoins(25); saveState(state);
+    }
+
+    // ─── TOASTS ───
+    function showToast(icon, text) {
+      const c = document.getElementById('toasts'), el = document.createElement('div');
+      el.className = 'toast'; el.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + text + '</span>';
+      c.appendChild(el); setTimeout(() => el.classList.add('out'), 3000); setTimeout(() => el.remove(), 3400);
+    }
+
+    // ─── PARTICLES ───
+    const canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+    function burst(x, y, count) {
+      const colors = ['#b9ff66','#ffcf66','#65a8ff','#b38aff','#ff5c66','#fff'];
+      for (let i = 0; i < (count||20); i++) {
+        const a = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5, s = 2 + Math.random() * 4;
+        particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 2, life: 1, decay: 0.015 + Math.random()*0.015, size: 3 + Math.random()*4, color: colors[Math.floor(Math.random()*colors.length)] });
+      }
+    }
+
+    function animP() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= p.decay;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; requestAnimationFrame(animP);
+    }
+    animP();
+
+    // ─── GAME CARD TRACKING ───
+    document.querySelectorAll('[data-game]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        ensureAudio(); SFX.click(); state.plays += 1; addXP(10);
+        if (state.plays === 1) unlock('first_game', '\u{1F3AE} First Launch \u2014 played your first game!');
+        if (state.plays >= 10) unlock('ten_plays', '\u{1F51F} Dedicated \u2014 launched 10 games!');
+        if (state.plays >= 50) unlock('fifty_plays', '\u{1F3C5} Addicted \u2014 50 game launches!');
+        const rect = e.currentTarget.getBoundingClientRect();
+        burst(rect.left + rect.width / 2, rect.top + rect.height / 2, 15);
+        render();
+      });
+    });
+
+    // ─── FILTERS ───
+    const filterBtns = [...document.querySelectorAll('.filter')];
+    const cards = [...document.querySelectorAll('.card')];
+    const feat = document.querySelector('.featured');
+
+    filterBtns.forEach(btn => btn.addEventListener('click', () => {
+      ensureAudio(); SFX.click();
+      filterBtns.forEach(x => x.classList.remove('active')); btn.classList.add('active');
+      const f = btn.dataset.filter;
+      cards.forEach(c => { const cats = (c.dataset.category||'').split(' '); c.classList.toggle('hidden', f !== 'all' && !cats.includes(f)); });
+      if (feat) { const cats = (feat.dataset.category||'').split(' '); feat.style.display = (f === 'all' || cats.includes(f)) ? '' : 'none'; }
+    }));
+
+    // ─── RANDOM ───
+    document.getElementById('randomGame').addEventListener('click', () => {
+      ensureAudio(); SFX.click();
+      const vis = cards.filter(c => !c.classList.contains('hidden'));
+      if (!vis.length) return;
+      const pick = vis[Math.floor(Math.random() * vis.length)];
+      const link = pick.querySelector('a[data-game]');
+      if (link) { pick.style.transform = 'scale(1.03)'; setTimeout(() => { pick.style.transform = ''; link.click(); }, 200); }
+    });
+
+    // ─── AGE TICKER ───
+    let secs = 674956800;
+    setInterval(() => { secs++; const el = document.getElementById('ageTicker'); if (el) el.textContent = secs.toLocaleString('en-US'); }, 1000);
+
+    // ─── INIT ───
+    checkStreak(); updateDaily(); render();
+    if (!loadState().xp) setTimeout(() => showToast('\u{1F579}\uFE0F', 'Welcome to Kais Arcade!'), 600);
+  })();
+  </script>
+</body>
+</html>

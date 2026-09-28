@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#120608"/>
+  <title>The Button — Kais Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0406;
+      --card-bg: rgba(26, 8, 12, 0.75);
+      --border: rgba(255, 68, 85, 0.22);
+      --red: #ff334b;
+      --red-dark: #8c0c1b;
+      --red-glow: rgba(255, 51, 75, 0.35);
+      --gold: #ffcf66;
+      --gold-dark: #997326;
+      --cream: #fceeed;
+      --muted: #a8888e;
+      --blue: #38bdf8;
+      --radius: 28px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; background: var(--bg); color: var(--cream); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; user-select: none; }
+    body {
+      background: radial-gradient(circle at 50% 25%, rgba(255, 51, 75, 0.16), transparent 50%),
+                  radial-gradient(circle at 80% 85%, rgba(255, 207, 102, 0.08), transparent 45%),
+                  linear-gradient(180deg, #140508, #070204);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    button { cursor: pointer; touch-action: manipulation; }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 24px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 5, 8, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 51, 75, 0.08);
+      transition: .15s ease;
+    }
+    .back-btn:hover { background: rgba(255, 51, 75, 0.2); }
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(15px, 3vw, 20px);
+      letter-spacing: .1em;
+      color: var(--red);
+      text-shadow: 0 0 16px var(--red-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(26, 8, 12, 0.6);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+    }
+    .sound-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(26, 8, 12, 0.6);
+      color: var(--red);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    /* Main Container */
+    .app {
+      width: min(100%, 820px);
+      margin: 0 auto;
+      padding: 16px clamp(12px, 3vw, 24px) 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      flex: 1;
+    }
+
+    /* Threat Header */
+    .threat-header {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .threat-level {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .threat-pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 10px var(--red);
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 0.4; transform: scale(0.85); } to { opacity: 1; transform: scale(1.15); } }
+    .threat-text {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* The Hero Button Chamber */
+    .chamber {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at 50% 50%, rgba(255, 51, 75, 0.08), transparent 60%), var(--card-bg);
+      border-radius: var(--radius);
+      padding: clamp(24px, 5vw, 44px) 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      position: relative;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    /* 3D Button Mechanism */
+    .button-pedestal {
+      position: relative;
+      width: clamp(210px, 45vw, 290px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+    .pedestal-ring {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #44171d, #1c0609);
+      border: 3px solid rgba(255, 51, 75, 0.25);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    }
+    .button-core {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 0;
+      background: radial-gradient(circle at 35% 30%, #ff6b7e 0%, #d4172f 50%, #750815 100%);
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.6), inset 0 4px 10px rgba(255, 255, 255, 0.4), inset 0 -12px 25px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(20px, 4.5vw, 28px);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      transition: transform .08s ease, filter .08s ease;
+      cursor: pointer;
+    }
+    .button-core:active {
+      transform: scale(0.93) translateY(8px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8), inset 0 8px 18px rgba(0, 0, 0, 0.8);
+      filter: brightness(0.9);
+    }
+    .button-core small {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .2em;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Counter Display */
+    .counter-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .counter-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(40px, 9vw, 68px);
+      font-weight: 900;
+      color: var(--cream);
+      text-shadow: 0 0 25px rgba(255, 51, 75, 0.35);
+      letter-spacing: -.03em;
+    }
+    .counter-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* Consequence Banner */
+    .consequence-box {
+      width: min(100%, 540px);
+      min-height: 52px;
+      border-radius: 16px;
+      border: 1px dashed var(--border);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1.35;
+      transition: all .2s ease;
+    }
+
+    /* Multiplier & Combo Bar */
+    .combo-bar-wrap {
+      width: min(100%, 460px);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .combo-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .combo-fill-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+    .combo-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      border-radius: 99px;
+      transition: width .15s ease;
+    }
+
+    /* Golden Glitch Button Event */
+    .glitch-target {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff7ad 0%, #e6a100 100%);
+      box-shadow: 0 0 25px rgba(255, 207, 102, 0.8);
+      border: 2px solid #fff;
+      display: none;
+      place-items: center;
+      font-size: 26px;
+      cursor: pointer;
+      z-index: 60;
+      animation: glitchSpin 1s infinite linear;
+    }
+    @keyframes glitchSpin { to { transform: rotate(360deg); } }
+
+    /* Chamber Controls & Prestige */
+    .chamber-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 540px;
+    }
+    .btn-sub {
+      padding: 10px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--cream);
+      font-size: 12px;
+      font-weight: 800;
+      transition: .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-sub:hover {
+      border-color: var(--gold);
+      background: rgba(255, 207, 102, 0.1);
+    }
+    .btn-prestige {
+      border-color: rgba(255, 207, 102, 0.4);
+      color: var(--gold);
+    }
+
+    /* Stats Grid */
+    .stats-ribbon {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .stat-box {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-val { font-size: 18px; font-weight: 950; color: var(--gold); }
+    .stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+
+    @media (max-width: 600px) {
+      .stats-ribbon { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="../" class="back-btn">← Kais Arcade</a>
+    <div class="brand-title">🔴 THE BUTTON</div>
+    <div class="top-right">
+      <div class="hud-badge"><span id="arcadeCoinsBadge">🪙 0</span></div>
+      <button class="sound-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- Threat Level Header -->
+    <div class="threat-header">
+      <div class="threat-level">
+        <div class="threat-pulse"></div>
+        <span id="threatTier">TIER 1: CALIBRATION</span>
+      </div>
+      <div class="threat-text" id="threatText">
+        Button integrity holding. No existential hazards detected.
+      </div>
+    </div>
+
+    <!-- The Button Chamber -->
+    <div class="chamber" id="chamber">
+
+      <!-- Flying Golden Button Glitch -->
+      <div class="glitch-target" id="goldenGlitch" title="Click for 10x Glitch Boost!">🌟</div>
+
+      <!-- Counter -->
+      <div class="counter-block">
+        <div class="counter-num" id="clickCounter">0</div>
+        <div class="counter-label">Presses Registered</div>
+      </div>
+
+      <!-- Pedestal & Red Core Button -->
+      <div class="button-pedestal">
+        <div class="pedestal-ring"></div>
+        <button class="button-core" id="mainButton">
+          <span>DO NOT</span>
+          <small>PRESS</small>
+        </button>
+      </div>
+
+      <!-- Consequence Alert Text -->
+      <div class="consequence-box" id="consequenceBox">
+        "You clicked it. Nothing happened. Probably safe to stop now."
+      </div>
+
+      <!-- Combo & Heat Meter -->
+      <div class="combo-bar-wrap">
+        <div class="combo-meta">
+          <span>COMBO MULTIPLIER: <strong id="comboMultiplierText" style="color:var(--gold)">1.0x</strong></span>
+          <span id="speedRating">Pacing: Leisurely</span>
+        </div>
+        <div class="combo-fill-track">
+          <div class="combo-fill" id="comboFill"></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="chamber-actions">
+        <button class="btn-sub btn-prestige" id="btnReboot">
+          ⚛️ Reboot Reality (Prestige)
+        </button>
+        <button class="btn-sub" id="btnCoolant">
+          ❄️ Vent Chamber Heat
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Stats Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stat-box">
+        <div class="stat-val" id="statAllTimeClicks">0</div>
+        <div class="stat-lbl">Lifetime Presses</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statQuantumCores">0</div>
+        <div class="stat-lbl">Quantum Cores</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statMaxCombo">1.0x</div>
+        <div class="stat-lbl">Highest Multiplier</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statGlitchesCaught">0</div>
+        <div class="stat-lbl">Glitches Caught</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  (() => {
+    // ─── AUDIO ENGINE ───
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null, soundOn = localStorage.getItem('ka_sound') !== 'off';
+
+    function ensureAudio() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playTone(freq, type, dur, vol = 0.15) {
+      if (!soundOn || !actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+        osc.connect(gain).connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch(e){}
+    }
+
+    const SFX = {
+      click(pitchMod = 1) {
+        playTone(180 * pitchMod, 'triangle', 0.08, 0.2);
+        setTimeout(() => playTone(120 * pitchMod, 'sine', 0.12, 0.15), 30);
+      },
+      alarm() {
+        playTone(660, 'sawtooth', 0.15, 0.15);
+        setTimeout(() => playTone(880, 'sawtooth', 0.2, 0.18), 120);
+      },
+      glitch() {
+        [880, 1100, 1400, 1760].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.1, 0.15), i * 50);
+        });
+      },
+      vent() {
+        if (!soundOn || !actx) return;
+        const node = actx.createBufferSource();
+        const buffer = actx.createBuffer(1, actx.sampleRate * 0.4, actx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+        node.buffer = buffer;
+        const gain = actx.createGain();
+        gain.gain.setValueAtTime(0.08, actx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, actx.currentTime + 0.4);
+        node.connect(gain).connect(actx.destination);
+        node.start();
+      },
+      fanfare() {
+        [523, 659, 784, 1046, 1318].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.18, 0.12), i * 80);
+        });
+      }
+    };
+
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.addEventListener('click', () => {
+      ensureAudio();
+      soundOn = !soundOn;
+      localStorage.setItem('ka_sound', soundOn ? 'on' : 'off');
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      if (soundOn) SFX.click(1);
+    });
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() {
+      try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; }
+    }
+    function saveArcadeState(s) {
+      localStorage.setItem('ka_state', JSON.stringify(s));
+    }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp;
+      s.coins += coins;
+      s.plays += 1;
+      saveArcadeState(s);
+      updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id);
+        s.coins += 50;
+        s.xp += 30;
+        saveArcadeState(s);
+        updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      document.getElementById('arcadeCoinsBadge').textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
+
+    // ─── GAME STATE ───
+    let clicks = 0;
+    let lifetimeClicks = 0;
+    let quantumCores = 0;
+    let glitchesCaught = 0;
+    let combo = 1.0;
+    let maxCombo = 1.0;
+    let lastClickTime = 0;
+    let comboDecayTimer = null;
+
+    // Load saved button state
+    try {
+      const saved = JSON.parse(localStorage.getItem('the_button_state'));
+      if (saved) {
+        clicks = saved.clicks || 0;
+        lifetimeClicks = saved.lifetimeClicks || 0;
+        quantumCores = saved.quantumCores || 0;
+        maxCombo = saved.maxCombo || 1.0;
+        glitchesCaught = saved.glitchesCaught || 0;
+      }
+    } catch(e){}
+
+    const TIERS = [
+      { min: 0, name: "TIER 1: CALIBRATION", text: "Button integrity holding. No hazards detected." },
+      { min: 10, name: "TIER 2: POWER GRID FLICKER", text: "Neighborhood streetlights reported dimming slightly." },
+      { min: 25, name: "TIER 3: SQUIRREL SURVEILLANCE", text: "Local wildlife is staring at your window with suspicion." },
+      { min: 50, name: "TIER 4: QUANTUM ENTANGLEMENT", text: "Your keys are now in three places simultaneously." },
+      { min: 100, name: "TIER 5: DECOMPILING REALITY", text: "Matrix code leaking into peripheral vision." },
+      { min: 250, name: "TIER 6: APOCALYPSE PROTOCOL", text: "UNIVERSAL COLLAPSE IMMINENT. DO NOT STOP PRESSING." }
+    ];
+
+    const QUOTES = [
+      "Why did you click it again? Nothing is going to happen.",
+      "Warning: A minor disturbance was detected in the space-time continuum.",
+      "Your IP address has been flagged by the Squirrel Intelligence Agency.",
+      "You have voided the universe's manufacturer warranty.",
+      "Someone in Ohio just sneezed because of you.",
+      "The button enjoyed that. Please maintain personal boundaries.",
+      "Simulation CPU utilization: 94.2%. Cooling fans engaged.",
+      "An extraterrestrial civilization just received an unintelligible ping.",
+      "Congratulations, you discovered the secret of wasting infinite time."
+    ];
+
+    function updateUI() {
+      document.getElementById('clickCounter').textContent = clicks.toLocaleString();
+      document.getElementById('statAllTimeClicks').textContent = lifetimeClicks.toLocaleString();
+      document.getElementById('statQuantumCores').textContent = quantumCores;
+      document.getElementById('statMaxCombo').textContent = maxCombo.toFixed(1) + 'x';
+      document.getElementById('statGlitchesCaught').textContent = glitchesCaught;
+      document.getElementById('comboMultiplierText').textContent = combo.toFixed(1) + 'x';
+      document.getElementById('comboFill').style.width = Math.min(100, (combo - 1) * 25) + '%';
+
+      // Current Tier
+      let currentTier = TIERS[0];
+      for (let i = TIERS.length - 1; i >= 0; i--) {
+        if (clicks >= TIERS[i].min) {
+          currentTier = TIERS[i];
+          break;
+        }
+      }
+      document.getElementById('threatTier').textContent = currentTier.name;
+      document.getElementById('threatText').textContent = currentTier.text;
+
+      // Save state
+      localStorage.setItem('the_button_state', JSON.stringify({
+        clicks,
+        lifetimeClicks,
+        quantumCores,
+        maxCombo,
+        glitchesCaught
+      }));
+    }
+
+    // ─── MAIN BUTTON CLICK ───
+    const mainButton = document.getElementById('mainButton');
+    mainButton.addEventListener('click', () => {
+      ensureAudio();
+
+      const now = performance.now();
+      const delta = now - lastClickTime;
+      lastClickTime = now;
+
+      // Calculate Combo
+      if (delta < 400) {
+        combo = Math.min(5.0, combo + 0.15);
+      } else {
+        combo = Math.max(1.0, combo - 0.2);
+      }
+      if (combo > maxCombo) maxCombo = combo;
+
+      const increment = Math.round((1 + quantumCores * 2) * combo);
+      clicks += increment;
+      lifetimeClicks += increment;
+
+      // Audio pitch escalates with combo
+      SFX.click(1 + (combo - 1) * 0.25);
+
+      // Consequence Quote Update every few clicks
+      if (Math.random() > 0.6) {
+        const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+        document.getElementById('consequenceBox').textContent = '"' + q + '"';
+      }
+
+      // Progression XP & Coins
+      awardArcadeXP(2, Math.floor(combo));
+
+      // Achievements
+      if (lifetimeClicks >= 100) unlockArcadeAchievement('button_100', '🔴 Masher — Clicked The Button 100 times!');
+      if (lifetimeClicks >= 1000) unlockArcadeAchievement('button_1000', '⚠️ Existential Menace — 1,000 Button Presses!');
+      if (combo >= 4.0) unlockArcadeAchievement('button_combo', '⚡ Speed Demon — Reached 4.0x Combo Speed!');
+
+      // Random Glitch Button Spawn (3% chance)
+      if (Math.random() < 0.03) {
+        spawnGoldenGlitch();
+      }
+
+      updateUI();
+    });
+
+    // Combo decay
+    setInterval(() => {
+      const now = performance.now();
+      if (now - lastClickTime > 800 && combo > 1.0) {
+        combo = Math.max(1.0, combo - 0.1);
+        updateUI();
+      }
+    }, 200);
+
+    // ─── GOLDEN GLITCH BUTTON ───
+    const goldenGlitch = document.getElementById('goldenGlitch');
+    function spawnGoldenGlitch() {
+      goldenGlitch.style.display = 'grid';
+      const chamber = document.getElementById('chamber');
+      const rect = chamber.getBoundingClientRect();
+      const x = Math.random() * (rect.width - 80) + 10;
+      const y = Math.random() * (rect.height - 80) + 10;
+      goldenGlitch.style.left = x + 'px';
+      goldenGlitch.style.top = y + 'px';
+      SFX.glitch();
+
+      setTimeout(() => {
+        goldenGlitch.style.display = 'none';
+      }, 4000);
+    }
+
+    goldenGlitch.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ensureAudio();
+      glitchesCaught++;
+      goldenGlitch.style.display = 'none';
+      SFX.fanfare();
+
+      const bonusClicks = 100 * (1 + quantumCores);
+      clicks += bonusClicks;
+      lifetimeClicks += bonusClicks;
+      awardArcadeXP(40, 20);
+      unlockArcadeAchievement('button_glitch', '🌟 Glitch Hunter — Caught a flying golden glitch!');
+      alert("💥 GOLDEN GLITCH CAUGHT! +" + bonusClicks + " clicks awarded!");
+      updateUI();
+    });
+
+    // ─── COOLANT VENT ───
+    document.getElementById('btnCoolant').addEventListener('click', () => {
+      ensureAudio();
+      SFX.vent();
+      document.getElementById('consequenceBox').textContent = '"Emergency steam released from the reaction chamber. Safe for now."';
+    });
+
+    // ─── PRESTIGE (REBOOT REALITY) ───
+    document.getElementById('btnReboot').addEventListener('click', () => {
+      ensureAudio();
+      if (clicks < 250) {
+        alert("You need at least 250 clicks to collapse reality and harvest Quantum Cores!");
+        return;
+      }
+      const earned = Math.floor(clicks / 250);
+      if (confirm("Reboot reality? You will sacrifice " + clicks + " clicks to harvest " + earned + " Quantum Cores (permanently boosts click power)!")) {
+        quantumCores += earned;
+        clicks = 0;
+        combo = 1.0;
+        SFX.fanfare();
+        awardArcadeXP(100, 50);
+        unlockArcadeAchievement('button_prestige', '⚛️ Multiverse Architect — Prestiged reality in The Button!');
+        updateUI();
+      }
+    });
+
+    updateUI();
+  })();
+  </script>
+</body>
+</html>
