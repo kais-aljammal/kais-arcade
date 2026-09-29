@@ -809,6 +809,7 @@
     let selectedTierName = "Fairness Recalibration";
     let lastPlayerMove = 'rock';
     let lastCpuMove = 'paper';
+    let isRoundInProgress = false;
 
     // Coping quotes
     const SHAME_QUOTES = [
@@ -835,9 +836,22 @@
       shameBtn.textContent = SHAME_QUOTES[Math.floor(Math.random() * SHAME_QUOTES.length)];
     }
 
+    function setMoveButtonsDisabled(disabled) {
+      document.querySelectorAll('.btn-move').forEach(b => {
+        b.disabled = disabled;
+        b.style.opacity = disabled ? '0.5' : '1';
+        b.style.pointerEvents = disabled ? 'none' : 'auto';
+      });
+    }
+
     // ─── PLAY ROUND ───
     function playRound(playerMove) {
+      if (isRoundInProgress) return;
+      if (document.getElementById('overturnModal').classList.contains('open')) return;
       ensureAudio();
+
+      isRoundInProgress = true;
+      setMoveButtonsDisabled(true);
       matchesCount++;
       lastPlayerMove = playerMove;
 
@@ -900,6 +914,10 @@
         resultMainEl.style.color = "var(--gold)";
         resultSubEl.textContent = "Neither paid enough to secure victory. Try again.";
         awardArcadeXP(5, 1);
+        setTimeout(() => {
+          isRoundInProgress = false;
+          setMoveButtonsDisabled(false);
+        }, 500);
       } else if (MOVES[playerMove].beats === cpuMove) {
         // Player wins legitimately!
         legitWins++;
@@ -910,6 +928,10 @@
         resultSubEl.textContent = "You beat the algorithm without spending a dime! A miracle!";
         awardArcadeXP(25, 15);
         unlockArcadeAchievement('rps_legit_win', '🏆 Skill Based — Won RPS without paying $99!');
+        setTimeout(() => {
+          isRoundInProgress = false;
+          setMoveButtonsDisabled(false);
+        }, 500);
       } else {
         // Player Lost! Trigger Pay-to-Win modal!
         cpuWinCount++;
@@ -938,8 +960,9 @@
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
-      const k = e.key.toLowerCase();
+      if (isRoundInProgress) return;
       if (document.getElementById('overturnModal').classList.contains('open')) return;
+      const k = e.key.toLowerCase();
       if (k === 'r') playRound('rock');
       if (k === 'p') playRound('paper');
       if (k === 's') playRound('scissors');
@@ -970,6 +993,8 @@
       ensureAudio();
       overturnModal.classList.remove('open');
       SFX.click();
+      isRoundInProgress = false;
+      setMoveButtonsDisabled(false);
     });
 
     // Process Pay-to-Win purchase
@@ -1037,6 +1062,8 @@
       }
 
       updateStatsUI();
+      isRoundInProgress = false;
+      setMoveButtonsDisabled(false);
     }
 
     updateStatsUI();

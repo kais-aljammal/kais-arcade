@@ -637,6 +637,35 @@
       }));
     }
 
+    // ─── FLOATING TOAST NOTIFICATION ───
+    function showButtonToast(msg, isGold = false) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${isGold ? 'linear-gradient(135deg, #ffd700, #ff9900)' : 'rgba(23, 16, 3, 0.95)'};
+        color: ${isGold ? '#171003' : '#ffcf66'};
+        border: 1px solid ${isGold ? '#fff' : 'rgba(255, 207, 102, 0.4)'};
+        padding: 12px 24px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 900;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        z-index: 9999;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      `;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-8px)';
+        setTimeout(() => toast.remove(), 350);
+      }, 3000);
+    }
+
     // ─── MAIN BUTTON CLICK ───
     const mainButton = document.getElementById('mainButton');
     mainButton.addEventListener('click', () => {
@@ -646,11 +675,11 @@
       const delta = now - lastClickTime;
       lastClickTime = now;
 
-      // Calculate Combo
-      if (delta < 400) {
+      // Calculate Combo smoothly without punishing regular clicks
+      if (delta < 700) {
         combo = Math.min(5.0, combo + 0.15);
       } else {
-        combo = Math.max(1.0, combo - 0.2);
+        combo = 1.15;
       }
       if (combo > maxCombo) maxCombo = combo;
 
@@ -683,11 +712,11 @@
       updateUI();
     });
 
-    // Combo decay
+    // Smooth combo decay on idle
     setInterval(() => {
       const now = performance.now();
-      if (now - lastClickTime > 800 && combo > 1.0) {
-        combo = Math.max(1.0, combo - 0.1);
+      if (now - lastClickTime > 900 && combo > 1.0) {
+        combo = Math.max(1.0, combo - 0.15);
         updateUI();
       }
     }, 200);
@@ -721,7 +750,8 @@
       lifetimeClicks += bonusClicks;
       awardArcadeXP(40, 20);
       unlockArcadeAchievement('button_glitch', '🌟 Glitch Hunter — Caught a flying golden glitch!');
-      alert("💥 GOLDEN GLITCH CAUGHT! +" + bonusClicks + " clicks awarded!");
+      showButtonToast("💥 GOLDEN GLITCH CAUGHT! +" + bonusClicks + " clicks awarded!", true);
+      document.getElementById('consequenceBox').textContent = '"Quantum anomaly captured. Spatial-temporal reality temporarily stabilized."';
       updateUI();
     });
 
@@ -736,19 +766,19 @@
     document.getElementById('btnReboot').addEventListener('click', () => {
       ensureAudio();
       if (clicks < 250) {
-        alert("You need at least 250 clicks to collapse reality and harvest Quantum Cores!");
+        showButtonToast("⚠️ Need at least 250 clicks to reboot reality! (Currently: " + clicks + ")", false);
         return;
       }
       const earned = Math.floor(clicks / 250);
-      if (confirm("Reboot reality? You will sacrifice " + clicks + " clicks to harvest " + earned + " Quantum Cores (permanently boosts click power)!")) {
-        quantumCores += earned;
-        clicks = 0;
-        combo = 1.0;
-        SFX.fanfare();
-        awardArcadeXP(100, 50);
-        unlockArcadeAchievement('button_prestige', '⚛️ Multiverse Architect — Prestiged reality in The Button!');
-        updateUI();
-      }
+      quantumCores += earned;
+      clicks = 0;
+      combo = 1.0;
+      SFX.fanfare();
+      awardArcadeXP(100, 50);
+      unlockArcadeAchievement('button_prestige', '⚛️ Multiverse Architect — Prestiged reality in The Button!');
+      showButtonToast("⚛️ REALITY REBOOTED! +" + earned + " Quantum Cores harvested (Permanent click power boost)!", true);
+      document.getElementById('consequenceBox').textContent = '"Universal reboot sequence executed. Reality has been factory reset."';
+      updateUI();
     });
 
     updateUI();

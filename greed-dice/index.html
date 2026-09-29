@@ -984,8 +984,9 @@
     let currentHighBet = 1000;
     let roundNumber = 1;
     let turnIndex = 0; // 0=You, 1=Maya, 2=Leo, 3=Nova
-    let bettingPhase = 'pre-roll'; // 'pre-roll', 'post-roll', 'showdown'
+    let bettingPhase = 'pre-roll'; // 'pre-roll', 'post-roll', 'ready-to-roll', 'showdown'
     let loanDebt = 0;
+    let activeSideBet = null; // { playerId, playerName, amount }
     let stats = { rounds: 0, wins: 0, streak: 0, startingStack: 100000 };
 
     // Load saved bankroll if available
@@ -1034,8 +1035,20 @@
         document.getElementById('bankroll-' + idx).textContent = '$' + Math.max(0, p.stack).toLocaleString();
         document.getElementById('bet-' + idx).textContent = p.folded ? 'FOLDED' : ('Bet: $' + p.bet.toLocaleString());
         seat.classList.toggle('folded', p.folded);
-        seat.classList.toggle('active-turn', turnIndex === idx && bettingPhase !== 'showdown');
+        seat.classList.toggle('active-turn', turnIndex === idx && bettingPhase === 'pre-roll' && !p.folded);
       });
+
+      // Side bet button status
+      const sideBetBtn = document.getElementById('sideBetBtn');
+      if (activeSideBet) {
+        sideBetBtn.textContent = '🎯 Pick: ' + activeSideBet.playerName + ' (3x)';
+        sideBetBtn.style.borderColor = 'var(--gold)';
+        sideBetBtn.style.color = 'var(--gold)';
+      } else {
+        sideBetBtn.textContent = '🎯 Side Bet CPU ($1,000)';
+        sideBetBtn.style.borderColor = '';
+        sideBetBtn.style.color = '';
+      }
 
       // Controls
       const isYourTurn = (turnIndex === 0) && (bettingPhase === 'pre-roll') && !PLAYERS[0].folded;
@@ -1054,7 +1067,7 @@
       document.getElementById('raiseLabel').textContent = 'RAISE (+$' + (minBet * 2).toLocaleString() + ')';
 
       btnFold.disabled = !isYourTurn;
-      btnRollNow.disabled = bettingPhase !== 'ready-to-roll';
+      btnRollNow.disabled = bettingPhase !== 'ready-to-roll' || PLAYERS[0].folded;
 
       // Stats
       document.getElementById('statRounds').textContent = stats.rounds;
@@ -1108,6 +1121,7 @@
       currentHighBet = minBet;
       bettingPhase = 'pre-roll';
       turnIndex = 0;
+      activeSideBet = null;
 
       document.querySelectorAll('.seat-card').forEach(s => s.classList.remove('winner'));
       document.getElementById('btnNextRound').style.display = 'none';
@@ -1116,6 +1130,7 @@
       // Reset players & Collect Ante
       PLAYERS.forEach((p, idx) => {
         p.folded = p.stack < minBet;
+        p.hasActed = false;
         p.bet = 0;
         p.score = 0;
         document.getElementById('score-' + idx).textContent = 'Score: —';
@@ -1139,6 +1154,11 @@
       setSpeech(3, "Roll the bones!");
 
       updateUI();
+
+      // If player cannot afford ante
+      if (PLAYERS[0].folded) {
+        advanceTurn();
+      }
     }
 
     // ─── PLAYER ACTION HANDLERS ───
@@ -1147,6 +1167,7 @@
       const toCall = currentHighBet - PLAYERS[0].bet;
       PLAYERS[0].stack -= toCall;
       PLAYERS[0].bet += toCall;
+      PLAYERS[0].hasActed = true;
       pot += toCall;
       SFX.chip();
       setSpeech(0, toCall === 0 ? "Checking." : "Matching $" + toCall.toLocaleString() + ".");
@@ -1162,6 +1183,11 @@
       PLAYERS[0].bet += total;
       pot += total;
       currentHighBet = PLAYERS[0].bet;
+      // Mark others as needing to respond to the raise
+      PLAYERS.forEach(p => {
+        if (!p.folded && p.id !== 0) p.hasActed = false;
+      });
+      PLAYERS[0].hasActed = true;
       SFX.raise();
       setSpeech(0, "Raising to $" + currentHighBet.toLocaleString() + "!");
       advanceTurn();
@@ -1170,41 +1196,83 @@
     document.getElementById('btnFold').addEventListener('click', () => {
       ensureAudio();
       PLAYERS[0].folded = true;
+      PLAYERS[0].hasActed = true;
       SFX.click();
       setSpeech(0, "I fold this hand.");
       advanceTurn();
     });
 
-    // ─── TURN & AI LOGIC ───
+    // ─── TURN & BETTING RESOLUTION ───
+    function isBettingSettled() {
+      const active = PLAYERS.filter(p => !p.folded);
+      if (active.length <= 1) return true;
+      return active.every(p => p.hasActed && (p.bet === currentHighBet || p.stack === 0));
+    }
+
+    function getNextTurnIndex(startIdx) {
+      for (let i = 1; i <= PLAYERS.length; i++) {
+        const next = (startIdx + i) % PLAYERS.length;
+        const p = PLAYERS[next];
+        if (!p.folded && (!p.hasActed || (p.bet < currentHighBet && p.stack > 0))) {
+          return next;
+        }
+      }
+      return -1;
+    }
+
     function advanceTurn() {
       updateUI();
       // Check if only one player remaining
       const active = PLAYERS.filter(p => !p.folded);
       if (active.length <= 1) {
-        showdown(active[0] || PLAYERS[0]);
+        showdown(active);
         return;
       }
 
-      turnIndex++;
-      if (turnIndex >= PLAYERS.length) {
-        // Everyone has acted
+      // Check if all active players settled their bets
+      if (isBettingSettled()) {
         bettingPhase = 'ready-to-roll';
-        document.getElementById('arenaStatus').textContent = "Bets placed! Hit ROLL DICE to roll.";
-        document.getElementById('btnRollNow').disabled = false;
         updateUI();
+
+        if (PLAYERS[0].folded) {
+          // You folded! Auto-simulate the roll for remaining players
+          document.getElementById('arenaStatus').textContent = "You folded. Simulating table showdown...";
+          document.getElementById('arenaSub').textContent = "Watch the remaining contenders roll.";
+          document.getElementById('btnRollNow').disabled = true;
+          setTimeout(() => executeDiceRoll(), 800);
+        } else {
+          document.getElementById('arenaStatus').textContent = "All bets matched! Hit ROLL DICE to showdown.";
+          document.getElementById('arenaSub').textContent = "High stakes on the table ($" + pot.toLocaleString() + ")";
+          document.getElementById('btnRollNow').disabled = false;
+        }
         return;
       }
 
-      // Next AI turn
+      // Advance to next unsettled player
+      const nextIdx = getNextTurnIndex(turnIndex);
+      if (nextIdx === -1) {
+        // Fallback to ready
+        bettingPhase = 'ready-to-roll';
+        updateUI();
+        if (PLAYERS[0].folded) setTimeout(() => executeDiceRoll(), 800);
+        return;
+      }
+
+      turnIndex = nextIdx;
       const cur = PLAYERS[turnIndex];
-      if (cur.folded) {
-        advanceTurn();
+
+      if (cur.id === 0) {
+        // Player's turn
+        updateUI();
+        document.getElementById('arenaStatus').textContent = "Your turn! Action on you.";
+        document.getElementById('arenaSub').textContent = "Current high bet: $" + currentHighBet.toLocaleString();
         return;
       }
 
+      // AI turn
       updateUI();
       document.getElementById('arenaStatus').textContent = cur.name + " is deciding...";
-      setTimeout(() => processAITurn(cur), 800);
+      setTimeout(() => processAITurn(cur), 750);
     }
 
     function processAITurn(ai) {
@@ -1215,38 +1283,45 @@
       if (ai.stack < toCall) {
         // AI forced fold
         ai.folded = true;
+        ai.hasActed = true;
         setSpeech(ai.id, quotes.fold[0]);
       } else if (style === 'aggressive') {
         const rnd = Math.random();
-        if (rnd > 0.45 && ai.stack >= toCall + minBet * 2) {
+        if (rnd > 0.5 && ai.stack >= toCall + minBet * 2) {
           // Raise
           const raise = toCall + minBet * 2;
           ai.stack -= raise;
           ai.bet += raise;
           pot += raise;
           currentHighBet = ai.bet;
+          PLAYERS.forEach(p => { if (!p.folded && p.id !== ai.id) p.hasActed = false; });
+          ai.hasActed = true;
           SFX.raise();
           setSpeech(ai.id, quotes.raise[Math.floor(Math.random() * quotes.raise.length)]);
-        } else if (rnd > 0.1) {
+        } else if (rnd > 0.12) {
           ai.stack -= toCall;
           ai.bet += toCall;
           pot += toCall;
+          ai.hasActed = true;
           SFX.chip();
           setSpeech(ai.id, quotes.call[Math.floor(Math.random() * quotes.call.length)]);
         } else {
           ai.folded = true;
+          ai.hasActed = true;
           setSpeech(ai.id, quotes.fold[Math.floor(Math.random() * quotes.fold.length)]);
         }
       } else if (style === 'conservative') {
         // Leo only raises on low stakes
         if (toCall > minBet * 3) {
-          if (Math.random() > 0.5) {
+          if (Math.random() > 0.45) {
             ai.folded = true;
+            ai.hasActed = true;
             setSpeech(ai.id, quotes.fold[0]);
           } else {
             ai.stack -= toCall;
             ai.bet += toCall;
             pot += toCall;
+            ai.hasActed = true;
             SFX.chip();
             setSpeech(ai.id, quotes.call[0]);
           }
@@ -1254,24 +1329,28 @@
           ai.stack -= toCall;
           ai.bet += toCall;
           pot += toCall;
+          ai.hasActed = true;
           SFX.chip();
           setSpeech(ai.id, quotes.call[0]);
         }
       } else {
         // Chaos Nova
         const rnd = Math.random();
-        if (rnd > 0.5 && ai.stack >= toCall + minBet * 2) {
+        if (rnd > 0.55 && ai.stack >= toCall + minBet * 2) {
           const raise = toCall + minBet * 2;
           ai.stack -= raise;
           ai.bet += raise;
           pot += raise;
           currentHighBet = ai.bet;
+          PLAYERS.forEach(p => { if (!p.folded && p.id !== ai.id) p.hasActed = false; });
+          ai.hasActed = true;
           SFX.raise();
           setSpeech(ai.id, quotes.raise[Math.floor(Math.random() * quotes.raise.length)]);
         } else {
           ai.stack -= toCall;
           ai.bet += toCall;
           pot += toCall;
+          ai.hasActed = true;
           SFX.chip();
           setSpeech(ai.id, quotes.call[Math.floor(Math.random() * quotes.call.length)]);
         }
@@ -1281,7 +1360,7 @@
     }
 
     // ─── ROLL DICE ───
-    document.getElementById('btnRollNow').addEventListener('click', () => {
+    function executeDiceRoll() {
       ensureAudio();
       document.getElementById('btnRollNow').disabled = true;
       document.getElementById('arenaStatus').textContent = "Rolling dice across the felt...";
@@ -1311,7 +1390,9 @@
 
         evaluateWinner();
       }, 900);
-    });
+    }
+
+    document.getElementById('btnRollNow').addEventListener('click', executeDiceRoll);
 
     function calculateScore(dice, modeId) {
       const sum = dice[0] + dice[1];
@@ -1332,52 +1413,86 @@
       const contenders = PLAYERS.filter(p => !p.folded);
       if (!contenders.length) return;
 
-      contenders.sort((a, b) => b.score - a.score);
-      const winner = contenders[0];
-      showdown(winner);
+      const maxScore = Math.max(...contenders.map(c => c.score));
+      const winners = contenders.filter(c => c.score === maxScore);
+      showdown(winners);
     }
 
-    function showdown(winner) {
+    function showdown(winners) {
       bettingPhase = 'showdown';
-      winner.stack += pot;
-      document.getElementById('seat-' + winner.id).classList.add('winner');
+      const initialPot = pot;
+      const splitPot = Math.floor(initialPot / winners.length);
+
+      winners.forEach(w => {
+        w.stack += splitPot;
+        document.getElementById('seat-' + w.id).classList.add('winner');
+      });
 
       stats.rounds++;
 
-      if (winner.id === 0) {
-        // You won!
+      // Check Side Bet Payout
+      let sideBetMsg = "";
+      if (activeSideBet) {
+        if (winners.some(w => w.id === activeSideBet.playerId)) {
+          const sidePayout = activeSideBet.amount * 3;
+          PLAYERS[0].stack += sidePayout;
+          SFX.win();
+          awardArcadeXP(25, 15);
+          unlockArcadeAchievement('greed_side_bet', '🎯 Inside Trader — Won a CPU side bet!');
+          sideBetMsg = " 🎯 SIDE BET WON: +$" + sidePayout.toLocaleString() + " (" + activeSideBet.playerName + ")!";
+        }
+        activeSideBet = null;
+      }
+
+      const playerWon = winners.some(w => w.id === 0);
+
+      if (playerWon) {
+        // You won or split!
         stats.wins++;
         stats.streak++;
         SFX.win();
-        document.getElementById('arenaStatus').textContent = "🎉 YOU WON THE POT OF $" + pot.toLocaleString() + "!";
-        setSpeech(0, "Read 'em and weep! My pot!");
+
+        if (winners.length > 1) {
+          const others = winners.filter(w => w.id !== 0).map(w => w.name).join(' & ');
+          document.getElementById('arenaStatus').textContent = "🤝 TIEBREAKER! Split pot with " + others + ": +$" + splitPot.toLocaleString() + " each!" + sideBetMsg;
+          setSpeech(0, "A tie is still profit! Let's split it.");
+        } else {
+          document.getElementById('arenaStatus').textContent = "🎉 YOU WON THE POT OF $" + initialPot.toLocaleString() + "!" + sideBetMsg;
+          setSpeech(0, "Read 'em and weep! My pot!");
+        }
 
         // Handle loan shark payback if any
         if (loanDebt > 0) {
-          const cut = Math.min(loanDebt, Math.floor(pot * 0.3));
+          const cut = Math.min(loanDebt, Math.floor(splitPot * 0.3));
           loanDebt -= cut;
-          winner.stack -= cut;
-          document.getElementById('arenaSub').textContent = "Loan Shark Vinny skimmed $" + cut.toLocaleString() + " for repayment!";
+          PLAYERS[0].stack -= cut;
+          document.getElementById('arenaSub').textContent = "Loan Shark Vinny skimmed $" + cut.toLocaleString() + " for debt repayment!";
         } else {
           document.getElementById('arenaSub').textContent = "Pure profit added to your bankroll.";
         }
 
         // Award Arcade progression
-        awardArcadeXP(35, Math.floor(pot / 1000));
+        awardArcadeXP(35, Math.floor(splitPot / 1000));
         unlockArcadeAchievement('greed_first_win', '🎲 High Roller — Won a hand of Greed Dice!');
         if (stats.streak >= 3) {
           unlockArcadeAchievement('greed_streak_3', '🔥 Hot Hand — 3 win streak in Greed Dice!');
         }
-        if (winner.stack >= 200000) {
+        if (PLAYERS[0].stack >= 200000) {
           unlockArcadeAchievement('greed_200k', '💰 Greed Incarnate — Stack exceeded $200,000!');
         }
       } else {
         // AI won
         stats.streak = 0;
         SFX.bust();
-        document.getElementById('arenaStatus').textContent = winner.name + " won the pot of $" + pot.toLocaleString() + "!";
-        const style = winner.style;
-        setSpeech(winner.id, DIALOGUES[style].win[Math.floor(Math.random() * DIALOGUES[style].win.length)]);
+        if (winners.length > 1) {
+          const names = winners.map(w => w.name).join(' and ');
+          document.getElementById('arenaStatus').textContent = "Tie between " + names + "! Split pot of $" + initialPot.toLocaleString() + "." + sideBetMsg;
+        } else {
+          const winner = winners[0];
+          document.getElementById('arenaStatus').textContent = winner.name + " won the pot of $" + initialPot.toLocaleString() + "!" + sideBetMsg;
+          const style = winner.style;
+          setSpeech(winner.id, DIALOGUES[style].win[Math.floor(Math.random() * DIALOGUES[style].win.length)]);
+        }
         awardArcadeXP(10, 5); // Consolation XP
       }
 
@@ -1418,14 +1533,19 @@
     // ─── SIDE BETTING ───
     document.getElementById('sideBetBtn').addEventListener('click', () => {
       ensureAudio();
+      if (activeSideBet) {
+        document.getElementById('arenaSub').textContent = "Side bet already placed on " + activeSideBet.playerName + " ($1,000 for 3x return)!";
+        return;
+      }
       if (PLAYERS[0].stack < 1000) {
-        alert("Not enough funds for side bet!");
+        document.getElementById('arenaSub').textContent = "Not enough stack for side bet ($1,000 required)!";
         return;
       }
       PLAYERS[0].stack -= 1000;
-      const pick = ['Maya', 'Leo', 'Nova'][Math.floor(Math.random() * 3)];
+      const pickPlayer = PLAYERS[1 + Math.floor(Math.random() * 3)];
+      activeSideBet = { playerId: pickPlayer.id, playerName: pickPlayer.name, amount: 1000 };
       SFX.chip();
-      alert("Placed $1,000 side bet on " + pick + " to win this round! 3x payout if they take the pot.");
+      document.getElementById('arenaSub').textContent = "🎯 Side bet placed: $1,000 on " + pickPlayer.name + " to win this round (3x payout)!";
       updateUI();
     });
 

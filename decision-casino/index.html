@@ -12,9 +12,12 @@
     body{min-height:100svh;color:var(--cream);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;background:radial-gradient(circle at 50% -20%,rgba(214,176,106,.12),transparent 38%),linear-gradient(180deg,#061711,#071a14)}
     button,input{font:inherit}button{touch-action:manipulation;cursor:pointer}
     .app{width:min(100%,1180px);margin:auto;min-height:100svh;padding:max(14px,env(safe-area-inset-top)) clamp(12px,3vw,28px) max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 4px 4px}
-    .brand{color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 4px 6px}
+    .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:6px 12px;border-radius:10px;border:1px solid rgba(214,176,106,.3);background:rgba(3,24,17,.6);transition:.15s ease}
+    .back-btn:hover{background:rgba(214,176,106,.15);border-color:var(--gold)}
+    .brand{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
     .top-right{display:flex;align-items:center;gap:8px}
+    .hud-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;border:1px solid rgba(214,176,106,.3);background:rgba(3,24,17,.6);font-size:12px;font-weight:900;color:var(--gold)}
     .fiction{color:#8fa89a;font-size:9px;letter-spacing:.1em;text-transform:uppercase;text-align:right;line-height:1.2}
     .sound-btn{width:36px;height:36px;border-radius:10px;border:1px solid rgba(214,176,106,.3);background:rgba(3,24,17,.5);color:var(--gold);display:grid;place-items:center;font-size:16px}
     .stage{flex:1;display:grid;place-items:center;min-height:0}
@@ -123,8 +126,10 @@
 <body>
   <main class="app">
     <header class="topbar">
+      <a href="../" class="back-btn">← Kais Arcade</a>
       <div class="brand">Decision Casino</div>
       <div class="top-right">
+        <div class="hud-badge" id="dcArcadeBadge">🪙 0</div>
         <button class="sound-btn" id="soundBtn" aria-label="Toggle sound">🔇</button>
         <div class="fiction">Fictional casino · No real gambling</div>
       </div>
@@ -249,6 +254,28 @@
     const sleep = ms => new Promise(r=>setTimeout(r,ms));
 
     let busy=false, currentOpts=[], gameMode='2', bo3state=null;
+
+    // ─── ARCADE META INTEGRATION ───
+    function getArcadeState() { try { return JSON.parse(localStorage.getItem('ka_state')) || {}; } catch { return {}; } }
+    function saveArcadeState(s) { localStorage.setItem('ka_state', JSON.stringify(s)); }
+    function awardArcadeXP(xp, coins = 0) {
+      const s = { xp: 0, coins: 0, plays: 0, achievements: [], ...getArcadeState() };
+      s.xp += xp; s.coins += coins; s.plays += 1;
+      saveArcadeState(s); updateArcadeBadge();
+    }
+    function unlockArcadeAchievement(id, title) {
+      const s = { xp: 0, coins: 0, achievements: [], ...getArcadeState() };
+      if (!s.achievements.includes(id)) {
+        s.achievements.push(id); s.coins += 50; s.xp += 30;
+        saveArcadeState(s); updateArcadeBadge();
+      }
+    }
+    function updateArcadeBadge() {
+      const s = getArcadeState();
+      const el = document.getElementById('dcArcadeBadge');
+      if (el) el.textContent = '🪙 ' + (s.coins || 0).toLocaleString();
+    }
+    updateArcadeBadge();
 
     // ─── PERSISTENCE ───
     let stats = { total:0, wins:{A:0,B:0,C:0,X:0}, history:[], ...JSON.parse(localStorage.getItem('dc_stats')||'{}') };
@@ -441,16 +468,22 @@
       if(bo3state){
         if(outcome==='A') bo3state.winsA++;
         else if(outcome==='B') bo3state.winsB++;
-        bo3state.round++;
 
-        if(bo3state.winsA>=2||bo3state.winsB>=2||bo3state.round>3){
-          const champ = bo3state.winsA>=2 ? currentOpts[0] : bo3state.winsB>=2 ? currentOpts[1] : 'UNDECIDED';
-          winnerText = champ.toUpperCase();
-          $('resultKicker').textContent = `BEST OF 3 CHAMPION (${bo3state.winsA}-${bo3state.winsB})`;
-          copyText = `After ${bo3state.round-1} grueling rounds, the decision has been made.`;
-          bo3state = null;
+        if(outcome === 'X'){
+          // Neither in BO3 is a push, re-spin the round without burning points
+          $('resultKicker').textContent = `ROUND ${bo3state.round} PUSH (NEITHER) — RE-ROLL!`;
+          copyText = "The wheel landed on Neither. Re-spin to determine who claims the point for round " + bo3state.round + "!";
         } else {
-          $('resultKicker').textContent = `ROUND ${bo3state.round-1} OF 3 — Score: ${bo3state.winsA}-${bo3state.winsB}`;
+          bo3state.round++;
+          if(bo3state.winsA>=2 || bo3state.winsB>=2 || bo3state.round>3){
+            const champ = bo3state.winsA>=2 ? currentOpts[0] : bo3state.winsB>=2 ? currentOpts[1] : (bo3state.winsA > bo3state.winsB ? currentOpts[0] : currentOpts[1]);
+            winnerText = champ.toUpperCase();
+            $('resultKicker').textContent = `BEST OF 3 CHAMPION (${bo3state.winsA}-${bo3state.winsB})`;
+            copyText = `After grueling rounds of calculation, ${champ} is officially crowned!`;
+            bo3state = null;
+          } else {
+            $('resultKicker').textContent = `ROUND ${bo3state.round-1} OF 3 — Score: A (${bo3state.winsA}) - B (${bo3state.winsB})`;
+          }
         }
       } else {
         $('resultKicker').textContent = 'Final decision';
@@ -470,6 +503,11 @@
       stats.history.push({a:currentOpts[0],b:currentOpts[1],c:currentOpts[2]||'',result:winnerText,time:Date.now()});
       if(stats.history.length>50) stats.history=stats.history.slice(-50);
       saveStats(); renderStats(); renderHistory();
+
+      // Award Arcade Progression
+      awardArcadeXP(25, 10);
+      unlockArcadeAchievement('dc_first_decision', '🎲 Fateful Spin — Made a choice in Decision Casino!');
+      if(stats.total >= 5) unlockArcadeAchievement('dc_frequent_spinner', '🎡 High Roller Decision Maker — Spun the wheel 5 times!');
 
       showOnly($('resultScreen'));
       busy=false; $('placeBtn').disabled=false;
@@ -506,8 +544,10 @@
     $('againBtn').addEventListener('click',()=>{
       ea();
       if(!busy){
-        if(bo3state){ runGame(); }
-        else { runGame(); }
+        if(gameMode === 'best3' && !bo3state){
+          bo3state = { round: 1, winsA: 0, winsB: 0 };
+        }
+        runGame();
       }
     });
     $('changeBtn').addEventListener('click',()=>{

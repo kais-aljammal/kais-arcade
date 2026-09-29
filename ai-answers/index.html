@@ -580,14 +580,25 @@
 
     let queriesCount = 0;
     let delusionsExposed = 0;
+    try {
+      const saved = JSON.parse(localStorage.getItem('oracle_stats'));
+      if (saved) {
+        queriesCount = saved.queries || 0;
+        delusionsExposed = saved.delusions || 0;
+      }
+    } catch(e){}
+
+    document.getElementById('statQueries').textContent = queriesCount;
+    document.getElementById('statDelusions').textContent = delusionsExposed;
 
     function processQuery(q) {
       if (!q || !q.trim()) return;
+      const btnAsk = document.getElementById('btnAsk');
+      if (btnAsk.disabled) return;
       ensureAudio();
 
       queriesCount++;
       const inputEl = document.getElementById('promptInput');
-      const btnAsk = document.getElementById('btnAsk');
       inputEl.value = '';
       btnAsk.disabled = true;
 
@@ -646,6 +657,7 @@
         // Update Stats
         document.getElementById('statQueries').textContent = queriesCount;
         document.getElementById('statDelusions').textContent = delusionsExposed;
+        localStorage.setItem('oracle_stats', JSON.stringify({ queries: queriesCount, delusions: delusionsExposed }));
 
         SFX.chime();
         btnAsk.disabled = false;

@@ -864,10 +864,45 @@
     updateArcadeBadge();
 
     // ─── EX PROFILES & DIALOGUES ───
+    // ─── FLOATING TOAST NOTIFICATION ───
+    function showNotification(msg, isSuccess = false) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${isSuccess ? 'rgba(34, 197, 94, 0.95)' : 'rgba(23, 16, 3, 0.95)'};
+        color: ${isSuccess ? '#031407' : '#ffcf66'};
+        border: 1px solid ${isSuccess ? '#22c55e' : 'rgba(255, 207, 102, 0.4)'};
+        padding: 12px 24px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 800;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        z-index: 9999;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      `;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(8px)';
+        setTimeout(() => toast.remove(), 350);
+      }, 3000);
+    }
+
+    // ─── EX PROFILES & DIALOGUES ───
     const EX_DATA = {
       tyler: {
         name: 'Toxic Tyler',
         avatar: '🏋️',
+        history: [
+          { type: 'sys', text: 'Today · Threat Level Low' },
+          { type: 'received', text: 'Hey, can you return my favorite gym hoodie or did you burn it?', time: 'Yesterday 11:22 PM' },
+          { type: 'sent', text: "I don't even know what hoodie you're talking about. Don't text me.", time: 'Yesterday 11:25 PM' }
+        ],
         texts: [
           "hey... I saw someone wearing gym shorts like yours today and almost cried on the squat rack.",
           "are you still listening to that indie band we used to pretend to like?",
@@ -884,6 +919,11 @@
       emma: {
         name: 'Emma',
         avatar: '☕',
+        history: [
+          { type: 'sys', text: 'Boundaries established Tuesday at 4:15 PM' },
+          { type: 'received', text: 'I am journaling about our dynamic right now and feel a lot of unresolved trauma.', time: '2 days ago' },
+          { type: 'sent', text: 'Please discuss that with your therapist, not me.', time: '2 days ago' }
+        ],
         texts: [
           "I know we said no contact, but I feel like our unhealed inner children deserve closure.",
           "I just ate a whole pizza and the guilt made me realize I never truly forgave you.",
@@ -898,6 +938,11 @@
       chad: {
         name: 'Crypto Chad',
         avatar: '🚀',
+        history: [
+          { type: 'sys', text: 'Smart contract session initialized' },
+          { type: 'received', text: 'Did you check the crypto chart today? We are down bad but I am holding.', time: 'Sunday' },
+          { type: 'sent', text: 'Do not text me financial advice or anything else.', time: 'Sunday' }
+        ],
         texts: [
           "Hey... remember when we talked about buying an apartment in Miami? I miss you.",
           "I just went 400 calories over my macros and realized nothing matters except you and Bitcoin.",
@@ -912,6 +957,11 @@
       greg: {
         name: 'Ghost Greg',
         avatar: '👻',
+        history: [
+          { type: 'sys', text: 'Last active: 247 days ago' },
+          { type: 'received', text: 'hey', time: '8 months ago' },
+          { type: 'sent', text: '?', time: '8 months ago' }
+        ],
         texts: [
           "Are you alive? It's been 8 months and NutriBot is exposing me.",
           "I know you won't reply, but I miss how you used to ignore my memes in real time.",
@@ -938,6 +988,27 @@
       excusesLanded: 0,
       caloriesLogged: 0
     };
+
+    function renderChatStream(exKey) {
+      const stream = document.getElementById('chatStream');
+      const ex = EX_DATA[exKey];
+      stream.innerHTML = '';
+      ex.history.forEach(item => {
+        const row = document.createElement('div');
+        if (item.type === 'sys') {
+          row.className = 'chat-date-stamp';
+          row.textContent = item.text;
+        } else {
+          row.className = 'bubble-row ' + item.type;
+          row.innerHTML = `
+            <div class="bubble bubble-${item.type}">${item.text}</div>
+            <div class="bubble-meta">${item.time || 'Just now'}</div>
+          `;
+        }
+        stream.appendChild(row);
+      });
+      stream.scrollTop = stream.scrollHeight;
+    }
 
     function updateDashboard() {
       document.getElementById('calCurrent').textContent = currentCalories.toLocaleString();
@@ -999,7 +1070,7 @@
       currentCalories += pick.cal;
       stats.caloriesLogged += pick.cal;
       SFX.chomp();
-      alert("Logged: " + pick.name + " (+" + pick.cal + " kcal)!");
+      showNotification("🍕 Logged: " + pick.name + " (+" + pick.cal + " kcal)!", true);
       updateDashboard();
 
       if (currentCalories >= LIMIT && !textSentTriggered) {
@@ -1017,6 +1088,7 @@
         const ex = EX_DATA[currentEx];
         document.getElementById('contactName').textContent = ex.name + " (Ex)";
         document.getElementById('contactAvatar').textContent = ex.avatar;
+        renderChatStream(currentEx);
         SFX.click();
       });
     });
@@ -1028,17 +1100,10 @@
 
       const ex = EX_DATA[currentEx];
       const randomText = ex.texts[Math.floor(Math.random() * ex.texts.length)];
+      const botMessage = `🤖 [MyFitnessEx Bot]: User exceeded 1,800 kcal limit. Auto-sending penalty confession: "${randomText}"`;
 
-      // Append bot auto-sent text to chat stream
-      const stream = document.getElementById('chatStream');
-      const row = document.createElement('div');
-      row.className = 'bubble-row sent';
-      row.innerHTML = `
-        <div class="bubble bubble-sent">🤖 [MyFitnessEx Bot]: User exceeded 1,800 kcal limit. Auto-sending penalty confession: "${randomText}"</div>
-        <div class="bubble-meta">Just now · Delivered</div>
-      `;
-      stream.appendChild(row);
-      stream.scrollTop = stream.scrollHeight;
+      ex.history.push({ type: 'sent', text: botMessage, time: 'Just now' });
+      renderChatStream(currentEx);
       SFX.swoosh();
 
       stats.textsSent++;
@@ -1076,15 +1141,8 @@
         const excuse = btn.dataset.excuse;
         const text = btn.textContent.replace(/"/g, '');
 
-        const stream = document.getElementById('chatStream');
-        const row = document.createElement('div');
-        row.className = 'bubble-row sent';
-        row.innerHTML = `
-          <div class="bubble bubble-sent">${text}</div>
-          <div class="bubble-meta">Just now · Read</div>
-        `;
-        stream.appendChild(row);
-        stream.scrollTop = stream.scrollHeight;
+        EX_DATA[currentEx].history.push({ type: 'sent', text: text, time: 'Just now' });
+        renderChatStream(currentEx);
         SFX.swoosh();
 
         stats.excusesLanded++;
@@ -1107,14 +1165,8 @@
         const ex = EX_DATA[currentEx];
         const reply = ex.replies[Math.floor(Math.random() * ex.replies.length)];
 
-        const row = document.createElement('div');
-        row.className = 'bubble-row received';
-        row.innerHTML = `
-          <div class="bubble bubble-received">${reply}</div>
-          <div class="bubble-meta">Just now</div>
-        `;
-        stream.appendChild(row);
-        stream.scrollTop = stream.scrollHeight;
+        ex.history.push({ type: 'received', text: reply, time: 'Just now' });
+        renderChatStream(currentEx);
         SFX.ding();
       }, 2000);
     }
@@ -1128,7 +1180,7 @@
         stats.daysSurvived++;
         awardArcadeXP(40, 25);
         unlockArcadeAchievement('ex_survived_day', '🥗 Calorie King — Stayed under limit and avoided texting your ex!');
-        alert("🎉 9:00 PM Reached! You survived the day with " + currentCalories + " kcal. Dignity intact!");
+        showNotification("🎉 9:00 PM Reached! Survived with " + currentCalories + " kcal. Dignity intact!", true);
       } else {
         if (!textSentTriggered) triggerOverLimitText();
       }
@@ -1142,9 +1194,13 @@
       textSentTriggered = false;
       document.getElementById('clockDisplay').textContent = "9:00 AM (Safe)";
       SFX.click();
+      EX_DATA[currentEx].history.push({ type: 'sys', text: '☀️ New Day Started — Dignity Reset to 100%' });
+      renderChatStream(currentEx);
+      showNotification("☀️ Day reset. 1,800 kcal budget restored!", true);
       updateDashboard();
     });
 
+    renderChatStream(currentEx);
     updateDashboard();
   })();
   </script>

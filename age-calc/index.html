@@ -546,7 +546,14 @@
 
       document.getElementById('teleHeartbeats').textContent = Math.floor(minutes * 72).toLocaleString();
       document.getElementById('teleBreaths').textContent = Math.floor(minutes * 16 * 0.5).toLocaleString() + ' L';
-      document.getElementById('teleMilkyWay').textContent = (Math.floor(hours * 828000) / 1000000).toFixed(1) + 'M km';
+      
+      const milkyKm = hours * 828000;
+      if (milkyKm >= 1e9) {
+        document.getElementById('teleMilkyWay').textContent = (milkyKm / 1e9).toFixed(2) + 'B km';
+      } else {
+        document.getElementById('teleMilkyWay').textContent = (milkyKm / 1e6).toFixed(1) + 'M km';
+      }
+
       document.getElementById('teleMoon').textContent = Math.floor(days / 29.53).toLocaleString();
       document.getElementById('telePizza').textContent = Math.floor(years * 46).toLocaleString() + ' slices';
       document.getElementById('teleSleep').textContent = Math.floor(hours * 0.33).toLocaleString() + ' hrs';
@@ -556,8 +563,16 @@
     requestAnimationFrame(renderFrame);
 
     function applyDate() {
-      birthTime = new Date(inputDate.value).getTime();
-      const years = (Date.now() - birthTime) / (1000 * 60 * 60 * 24 * 365.25);
+      ensureAudio();
+      const parsed = new Date(inputDate.value).getTime();
+      if (isNaN(parsed) || parsed > Date.now()) {
+        inputDate.value = '2000-01-01';
+        birthTime = new Date('2000-01-01').getTime();
+      } else {
+        birthTime = parsed;
+      }
+      playTone(900, 'sine', 0.05, 0.08);
+      const years = Math.max(0, (Date.now() - birthTime) / (1000 * 60 * 60 * 24 * 365.25));
       updatePeer(Math.round(years));
       awardArcadeXP(15, 10);
       unlockArcadeAchievement('age_crisis', '💀 Existentialist — Faced your chronological mortality!');
